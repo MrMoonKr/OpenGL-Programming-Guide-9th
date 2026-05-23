@@ -1,0 +1,21 @@
+{
+  "cmake.useCMakePresets": "always",
+  "cmake.configureOnOpen": false,
+  "cmake.generator": "Visual Studio 17 2022",
+  "cmake.configurePreset": "vs2022-debug",
+  "cmake.buildPreset": "build-debug",
+  "cmake.statusbar.advanced": {
+    "debug": {
+      "visibility": "compact"
+    },
+    "launch": {
+      "visibility": "compact"
+    },
+    "build": {
+      "visibility": "compact"
+    },
+    "configure": {
+      "visibility": "compact"
+    }
+  }
+}

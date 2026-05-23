@@ -1,0 +1,58 @@
+find_package(OpenMP)
+
+add_custom_target(
+    copy_media_assets
+    COMMAND "${CMAKE_COMMAND}" -E make_directory "${PROJECT_SOURCE_DIR}/bin/$<CONFIG>/media"
+    COMMAND "${CMAKE_COMMAND}" -E copy_directory "${PROJECT_SOURCE_DIR}/media" "${PROJECT_SOURCE_DIR}/bin/$<CONFIG>/media"
+    COMMENT "Copying media assets to runtime output"
+)
+
+function(add_vermilion_example name)
+    add_executable(${name} WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/${name}.cpp")
+    set_property(TARGET ${name} PROPERTY DEBUG_POSTFIX "_d")
+    add_dependencies(${name} copy_media_assets)
+    target_link_libraries(${name} PRIVATE vermilion)
+
+    if(OpenMP_CXX_FOUND)
+        target_link_libraries(${name} PRIVATE OpenMP::OpenMP_CXX)
+    endif()
+
+    if(MSVC)
+        target_compile_options(${name} PRIVATE /utf-8)
+    endif()
+endfunction()
+
+add_subdirectory(common)
+add_subdirectory(01-keypress)
+add_subdirectory(01-triangles)
+add_subdirectory(03-drawcommands)
+add_subdirectory(03-instancing)
+add_subdirectory(03-instancing2)
+add_subdirectory(03-instancing3)
+add_subdirectory(03-pointsprites)
+add_subdirectory(03-primitiverestart)
+add_subdirectory(03-xfb)
+add_subdirectory(04-gouraud)
+add_subdirectory(04-gouraud-float)
+add_subdirectory(04-shadowmap)
+add_subdirectory(06-cubemap)
+add_subdirectory(06-load-texture)
+add_subdirectory(06-mipfilters)
+add_subdirectory(06-mipmap)
+add_subdirectory(06-multitexture)
+add_subdirectory(06-statictexture)
+add_subdirectory(06-texturewrapping)
+add_subdirectory(06-volumetexturing)
+add_subdirectory(08-lightmodels)
+add_subdirectory(09-simpletess)
+add_subdirectory(09-teapot)
+add_subdirectory(10-draw-xfb)
+add_subdirectory(10-fur)
+add_subdirectory(10-viewport-array)
+add_subdirectory(11-doublewrite)
+add_subdirectory(11-oit)
+add_subdirectory(11-overdrawcount)
+add_subdirectory(12-imageprocessing)
+add_subdirectory(12-particlesimulator)
+add_subdirectory(12-raytracer)
+add_subdirectory(12-simplecompute)

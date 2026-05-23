@@ -1,0 +1,331 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "configure-debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--preset",
+        "vs2022-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "configure-release",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--preset",
+        "vs2022-release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "build-debug",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "build-debug"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "build-release",
+      "type": "shell",
+      "command": "cmake",
+      "args": [
+        "--build",
+        "--preset",
+        "build-release"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "group": "build",
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "build-debug:01-keypress",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "01-keypress"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:01-triangles",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "01-triangles"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-drawcommands",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-drawcommands"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-instancing",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-instancing"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-instancing2",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-instancing2"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-instancing3",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-instancing3"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-pointsprites",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-pointsprites"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-primitiverestart",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-primitiverestart"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:03-xfb",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "03-xfb"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:04-gouraud",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "04-gouraud"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:04-gouraud-float",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "04-gouraud-float"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:04-shadowmap",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "04-shadowmap"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-cubemap",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-cubemap"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-load-texture",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-load-texture"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-mipfilters",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-mipfilters"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-mipmap",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-mipmap"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-multitexture",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-multitexture"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-statictexture",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-statictexture"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-texturewrapping",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-texturewrapping"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:06-volumetexturing",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "06-volumetexturing"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:08-lightmodels",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "08-lightmodels"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:09-simpletess",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "09-simpletess"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:09-teapot",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "09-teapot"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:10-draw-xfb",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "10-draw-xfb"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:10-fur",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "10-fur"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:10-viewport-array",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "10-viewport-array"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:11-doublewrite",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "11-doublewrite"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:11-oit",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "11-oit"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:11-overdrawcount",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "11-overdrawcount"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:12-imageprocessing",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "12-imageprocessing"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:12-particlesimulator",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "12-particlesimulator"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:12-raytracer",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "12-raytracer"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:12-simplecompute",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "12-simplecompute"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    }
+  ]
+}
