@@ -5,7 +5,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <GL/gl.h>
+#include <glad/gl.h>
 
 const int NumCubeVertices = 8;
 const int NumCubeFaces = 6;

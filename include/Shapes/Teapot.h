@@ -4,7 +4,7 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#include <GL/gl.h>
+#include <glad/gl.h>
 
 const int NumTeapotVertices = 306;
 const int NumTeapotPatches = 32;

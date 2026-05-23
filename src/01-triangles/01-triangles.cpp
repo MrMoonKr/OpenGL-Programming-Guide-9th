@@ -4,6 +4,13 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 #include "vgl.h"
 #include "LoadShaders.h"
 
@@ -89,7 +96,13 @@ main( int argc, char** argv )
     GLFWwindow* window = glfwCreateWindow(800, 600, "Triangles", NULL, NULL);
 
     glfwMakeContextCurrent(window);
-    gl3wInit();
+
+    if (gladLoadGL(glfwGetProcAddress) == 0)
+    {
+        glfwDestroyWindow(window);
+        glfwTerminate();
+        return -1;
+    }
 
     init();
 
@@ -103,4 +116,6 @@ main( int argc, char** argv )
     glfwDestroyWindow(window);
 
     glfwTerminate();
+
+    return 0;
 }

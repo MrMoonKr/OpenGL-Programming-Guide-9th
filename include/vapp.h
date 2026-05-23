@@ -1,6 +1,13 @@
 #ifndef __VAPP_H__
 #define __VAPP_H__
 
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <windows.h>
+#endif
+
 #include "vgl.h"
 
 class VermilionApplication
@@ -30,7 +37,7 @@ protected:
                                              GLenum severity,
                                              GLsizei length,
                                              const GLchar* message,
-                                             GLvoid* userParam);
+                                             const void* userParam);
 #endif
 
 public:
@@ -76,7 +83,7 @@ void APIENTRY VermilionApplication::DebugOutputCallback(GLenum source,          
                                                          GLenum severity,       \
                                                          GLsizei length,        \
                                                          const GLchar* message, \
-                                                         GLvoid* userParam)     \
+                                                         const void* userParam) \
 {                                                                               \
     OutputDebugStringA(message);                                                \
     OutputDebugStringA("\n");                                                   \
@@ -89,7 +96,7 @@ void APIENTRY VermilionApplication::DebugOutputCallback(GLenum source,         \
                                                          GLenum severity,       \
                                                          GLsizei length,        \
                                                          const GLchar* message, \
-                                                         GLvoid* userParam)     \
+                                                         const void* userParam) \
 {                                                                               \
     printf("Debug Message: SOURCE(0x%04X), "\
                           "TYPE(0x%04X), "\
