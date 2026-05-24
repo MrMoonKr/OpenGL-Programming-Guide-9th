@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "03-xfb.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -13,41 +13,6 @@
 #include "vbm.h"
 
 #include <stdio.h>
-
-BEGIN_APP_DECLARATION(TransformFeedbackExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint update_prog;
-    GLuint vao[2];
-    GLuint vbo[2];
-    GLuint xfb;
-
-    GLuint render_prog;
-    GLuint geometry_vbo;
-    GLuint render_vao;
-    GLint render_model_matrix_loc;
-    GLint render_projection_matrix_loc;
-
-    GLuint geometry_tex;
-
-    GLuint geometry_xfb;
-    GLuint particle_xfb;
-
-    GLint model_matrix_loc;
-    GLint projection_matrix_loc;
-    GLint triangle_count_loc;
-    GLint time_step_loc;
-
-    VBObject object;
-END_APP_DECLARATION()
-
-DEFINE_APP(TransformFeedbackExample, "TransformFeedback Example")
 
 const int point_count = 5000;
 static unsigned int seed = 0x13371337;
@@ -75,123 +40,21 @@ static vmath::vec3 random_vector(float minmag = 0.0f, float maxmag = 1.0f)
     return randomvec;
 }
 
-void TransformFeedbackExample::Initialize(const char * title)
+bool TransformFeedbackExample::OnInitialize(const AppConfig& config)
 {
     int i, j;
 
-    base::Initialize(title);
+    if (!VermilionApplication::OnInitialize(config))
 
+    {
+
+        return false;
+
+    }
     update_prog = glCreateProgram();
 
-    static const char update_vs_source[] =
-            "#version 410\n"
-            "\n"
-            "uniform mat4 model_matrix;\n"
-            "uniform mat4 projection_matrix;\n"
-            "uniform int triangle_count;\n"
-            "\n"
-            "layout (location = 0) in vec4 position;\n"
-            "layout (location = 1) in vec3 velocity;\n"
-            "\n"
-            "out vec4 position_out;\n"
-            "out vec3 velocity_out;\n"
-            "\n"
-            "uniform samplerBuffer geometry_tbo;\n"
-            "uniform float time_step = 0.02;\n"
-            "\n"
-            "bool intersect(vec3 origin, vec3 direction, vec3 v0, vec3 v1, vec3 v2, out vec3 point)\n"
-            "{\n"
-            "    vec3 u, v, n;\n"
-            "    vec3 w0, w;\n"
-            "    float r, a, b;\n"
-            "\n"
-            "    u = (v1 - v0);\n"
-            "    v = (v2 - v0);\n"
-            "    n = cross(u, v);\n"
-            // "    if (length(n) < 0.1)\n"
-            // "        return false;\n"
-            "\n"
-            "    w0 = origin - v0;\n"
-            "    a = -dot(n, w0);\n"
-            "    b = dot(n, direction);\n"
-            //"    if (abs(b) < 0.1)\n"
-            //"        return false;\n"
-            "\n"
-            "    r = a / b;\n"
-            "    if (r < 0.0 || r > 1.0)\n"
-            "        return false;\n"
-            "\n"
-            "    point = origin + r * direction;\n"
-            "\n"
-            "    float uu, uv, vv, wu, wv, D;\n"
-            "\n"
-            "    uu = dot(u, u);\n"
-            "    uv = dot(u, v);\n"
-            "    vv = dot(v, v);\n"
-            "    w = point - v0;\n"
-            "    wu = dot(w, u);\n"
-            "    wv = dot(w, v);\n"
-            "    D = uv * uv - uu * vv;\n"
-            "\n"
-            "    float s, t;\n"
-            "\n"
-            "    s = (uv * wv - vv * wu) / D;\n"
-            "    if (s < 0.0 || s > 1.0)\n"
-            "        return false;\n"
-            "    t = (uv * wu - uu * wv) / D;\n"
-            "    if (t < 0.0 || (s + t) > 1.0)\n"
-            "        return false;\n"
-            "\n"
-            "    return true;\n"
-            "}\n"
-            "\n"
-            "vec3 reflect_vector(vec3 v, vec3 n)\n"
-            "{\n"
-            "    return v - 2.0 * dot(v, n) * n;\n"
-            "}\n"
-            "\n"
-            "void main(void)\n"
-            "{\n"
-            "    vec3 accelleration = vec3(0.0, -0.3, 0.0);\n"
-            "    vec3 new_velocity = velocity + accelleration * time_step;\n"
-            "    vec4 new_position = position + vec4(new_velocity * time_step, 0.0);\n"
-            "    vec3 v0, v1, v2;\n"
-            "    vec3 point;\n"
-            "    int i;\n"
-            "    for (i = 0; i < triangle_count; i++)\n"
-            "    {\n"
-            "        v0 = texelFetch(geometry_tbo, i * 3).xyz;\n"
-            "        v1 = texelFetch(geometry_tbo, i * 3 + 1).xyz;\n"
-            "        v2 = texelFetch(geometry_tbo, i * 3 + 2).xyz;\n"
-            "        if (intersect(position.xyz, position.xyz - new_position.xyz, v0, v1, v2, point))\n"
-            "        {\n"
-            "            vec3 n = normalize(cross(v1 - v0, v2 - v0));\n"
-            "            new_position = vec4(point + reflect_vector(new_position.xyz - point, n), 1.0);\n"
-            "            new_velocity = 0.8 * reflect_vector(new_velocity, n);\n"
-            "        }\n"
-            "    }\n"
-            "    if (new_position.y < -40.0)\n"
-            "    {\n"
-            "        new_position = vec4(-new_position.x * 0.3, position.y + 80.0, 0.0, 1.0);\n"
-            "        new_velocity *= vec3(0.2, 0.1, -0.3);\n"
-            "    }\n"
-            "    velocity_out = new_velocity * 0.9999;\n"
-            "    position_out = new_position;\n"
-            "    gl_Position = projection_matrix * (model_matrix * position);\n"
-            "}\n";
-
-    static const char white_fs[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = vec4(1.0);\n"
-        "}\n";
-
-    vglAttachShaderSource(update_prog, GL_VERTEX_SHADER, update_vs_source);
-    vglAttachShaderSource(update_prog, GL_FRAGMENT_SHADER, white_fs);
+    vglAttachShaderFile(update_prog, GL_VERTEX_SHADER, "media/shaders/xfb/update.vs.glsl");
+    vglAttachShaderFile(update_prog, GL_FRAGMENT_SHADER, "media/shaders/xfb/update.fs.glsl");
 
     static const char * varyings[] =
     {
@@ -210,41 +73,8 @@ void TransformFeedbackExample::Initialize(const char * title)
 
     render_prog = glCreateProgram();
 
-    static const char render_vs[] =
-        "#version 410\n"
-        "\n"
-        "uniform mat4 model_matrix;\n"
-        "uniform mat4 projection_matrix;\n"
-        "\n"
-        "layout (location = 0) in vec4 position;\n"
-        "layout (location = 1) in vec3 normal;\n"
-        "\n"
-        "out vec4 world_space_position;\n"
-        "\n"
-        "out vec3 vs_fs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vec4 pos = (model_matrix * (position * vec4(1.0, 1.0, 1.0, 1.0)));\n"
-        "    world_space_position = pos;\n"
-        "    vs_fs_normal = normalize((model_matrix * vec4(normal, 0.0)).xyz);\n"
-        "    gl_Position = projection_matrix * pos;\n"
-        "}\n";
-
-    static const char blue_fs[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "in vec3 vs_fs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = vec4(0.0, 0.2, 0.0, 1.0) + vec4(0.2, 0.5, 0.4, 1.0) * abs(vs_fs_normal.z) + vec4(0.8, 0.9, 0.7, 1.0) * pow(abs(vs_fs_normal.z), 70.0);\n"
-        "}\n";
-
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, blue_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/xfb/render.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/xfb/render.fs.glsl");
 
     static const char * varyings2[] =
     {
@@ -308,6 +138,8 @@ void TransformFeedbackExample::Initialize(const char * title)
     glClearDepth(1.0f);
 
     object.LoadFromVBM("media/armadillo_low.vbm", 0, 1, 2);
+
+    return true;
 }
 
 static inline int min(int a, int b)
@@ -315,10 +147,10 @@ static inline int min(int a, int b)
     return a < b ? a : b;
 }
 
-void TransformFeedbackExample::Display(bool auto_redraw)
+void TransformFeedbackExample::OnDisplay()
 {
     static int frame_count = 0;
-    float t = float(app_time() & 0x3FFFF) / float(0x3FFFF);
+    float t = float(GetAppTime() & 0x3FFFF) / float(0x3FFFF);
     static float q = 0.0f;
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
@@ -379,10 +211,10 @@ void TransformFeedbackExample::Display(bool auto_redraw)
 
     frame_count++;
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void TransformFeedbackExample::Finalize(void)
+void TransformFeedbackExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(update_prog);
@@ -390,9 +222,18 @@ void TransformFeedbackExample::Finalize(void)
     glDeleteBuffers(2, vbo);
 }
 
-void TransformFeedbackExample::Resize(int width, int height)
+void TransformFeedbackExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    TransformFeedbackExample app;
+    AppConfig config{};
+    config.title = "TransformFeedback Example";
+    return app.Run(config);
+}
+

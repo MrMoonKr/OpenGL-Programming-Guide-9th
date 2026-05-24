@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Graham Sellers
+ * Copyright 2012-2015 Graham Sellers
  *
  * This code is part of the OpenGL Programming Guide, 9th Edition.
  *
@@ -28,7 +28,7 @@
 
 #include <iostream>
 
-#include "vapp.h"
+#include "09-teapot.h"
 #include "mat.h"
 #include "LoadShaders.h"
 #include "Shapes/Teapot.h"
@@ -44,22 +44,12 @@ GLfloat  Outer = 10.0f;
 
 //----------------------------------------------------------------------------
 
-BEGIN_APP_DECLARATION(TeapotExample)
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-    virtual void OnKey(int key, int scancode, int action, int mods);
-
-    float aspect;
-END_APP_DECLARATION()
-
-DEFINE_APP(TeapotExample, "Teapot Rendering")
-
-void TeapotExample::Initialize(const char * title)
+bool TeapotExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     // Create a vertex array object
     GLuint vao;
     glGenVertexArrays( 1, &vao );
@@ -101,20 +91,22 @@ void TeapotExample::Initialize(const char * title)
 
     glUniform1f( InnerLoc, Inner );
     glUniform1f( OuterLoc, Outer );
-    
+
         mat4  modelview = Translate( -0.2625f, -1.575f, -1.0f );
         modelview *= Translate( 0.0f, 0.0f, -7.5f );
     glUniformMatrix4fv( glGetUniformLocation( program, "MV" ),
                         1, GL_TRUE, modelview );
 
     glPatchParameteri( GL_PATCH_VERTICES, NumTeapotVerticesPerPatch );
-    
+
     glClearColor( 0.0, 0.0, 0.0, 1.0 );
+
+    return true;
 }
 
 //----------------------------------------------------------------------------
 
-void TeapotExample::Display(bool auto_redraw)
+void TeapotExample::OnDisplay()
 {
     mat4  projection = Perspective( 60.0, aspect, 5, 10 );
     glUniformMatrix4fv( PLoc, 1, GL_TRUE, projection );
@@ -123,13 +115,13 @@ void TeapotExample::Display(bool auto_redraw)
     glDrawElements( GL_PATCHES, NumTeapotVertices,
                     GL_UNSIGNED_INT, BUFFER_OFFSET(0) );
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
 //----------------------------------------------------------------------------
 
-void TeapotExample::Resize(int width, int height)
-{    
+void TeapotExample::OnResize(int width, int height)
+{
     glViewport( 0, 0, width, height );
 
     aspect = GLfloat(width) / height;
@@ -137,7 +129,7 @@ void TeapotExample::Resize(int width, int height)
 
 //----------------------------------------------------------------------------
 
-void TeapotExample::Finalize(void)
+void TeapotExample::OnShutdown()
 {
 }
 
@@ -147,7 +139,7 @@ void TeapotExample::OnKey(int key, int scancode, int action, int mods)
     {
         switch (key)
         {
-            case GLFW_KEY_K: 
+            case GLFW_KEY_K:
                 Inner--;
                 if ( Inner < 1.0 )  Inner = 1.0;
                 glUniform1f( InnerLoc, Inner );
@@ -159,7 +151,7 @@ void TeapotExample::OnKey(int key, int scancode, int action, int mods)
                 glUniform1f( InnerLoc, Inner );
                 break;
 
-            case GLFW_KEY_L: 
+            case GLFW_KEY_L:
                 Outer--;
                 if ( Outer < 1.0 )  Outer = 1.0;
                 glUniform1f( OuterLoc, Outer );
@@ -186,3 +178,12 @@ void TeapotExample::OnKey(int key, int scancode, int action, int mods)
         }
     }
 }
+
+int main(int argc, char** argv)
+{
+    TeapotExample app;
+    AppConfig config{};
+    config.title = "Teapot Rendering";
+    return app.Run(config);
+}
+

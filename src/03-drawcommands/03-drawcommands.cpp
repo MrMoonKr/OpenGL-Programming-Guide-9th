@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Graham Sellers
+ * Copyright  2012-2015 Graham Sellers
  *
  * This code is part of the OpenGL Programming Guide, 9th Edition.
  *
@@ -31,7 +31,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "03-drawcommands.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -42,30 +42,12 @@
 
 using namespace vmath;
 
-BEGIN_APP_DECLARATION(DrawCommandExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint render_prog;
-    GLuint vao[1];
-    GLuint vbo[1];
-    GLuint ebo[1];
-
-    GLint render_model_matrix_loc;
-    GLint render_projection_matrix_loc;
-END_APP_DECLARATION()
-
-DEFINE_APP(DrawCommandExample, "Drawing Commands Example")
-
-void DrawCommandExample::Initialize(const char * title)
+bool DrawCommandExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     ShaderInfo shader_info[] =
     {
         { GL_VERTEX_SHADER, "media/shaders/primitive_restart/primitive_restart.vs.glsl" },
@@ -124,11 +106,13 @@ void DrawCommandExample::Initialize(const char * title)
     glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, 0, (const GLvoid *)sizeof(vertex_positions));
     glEnableVertexAttribArray(0);
     glEnableVertexAttribArray(1);
+
+    return true;
 }
 
-void DrawCommandExample::Display(bool auto_redraw)
+void DrawCommandExample::OnDisplay()
 {
-    float t = float(app_time() & 0x1FFF) / float(0x1FFF);
+    float t = float(GetAppTime() & 0x1FFF) / float(0x1FFF);
     static float q = 0.0f;
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
@@ -174,10 +158,10 @@ void DrawCommandExample::Display(bool auto_redraw)
     glUniformMatrix4fv(render_model_matrix_loc, 1, GL_FALSE, model_matrix);
     glDrawArraysInstanced(GL_TRIANGLES, 0, 3, 1);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void DrawCommandExample::Finalize(void)
+void DrawCommandExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_prog);
@@ -185,9 +169,18 @@ void DrawCommandExample::Finalize(void)
     glDeleteBuffers(1, vbo);
 }
 
-void DrawCommandExample::Resize(int width, int height)
+void DrawCommandExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    DrawCommandExample app;
+    AppConfig config{};
+    config.title = "Drawing Commands Example";
+    return app.Run(config);
+}
+

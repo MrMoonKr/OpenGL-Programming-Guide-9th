@@ -8,7 +8,7 @@
 // #define USE_GL3W
 #include <vermilion.h>
 
-#include "vapp.h"
+#include "12-imageprocessing.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -16,59 +16,16 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(ImageProcessingComputeExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    GLuint  compute_prog;
-    GLuint  compute_shader;
-
-    // Texture to process
-    GLuint  input_image;
-
-    // Texture for compute shader to write into
-    GLuint  intermediate_image;
-    GLuint  output_image;
-
-    // Program, vao and vbo to render a full screen quad
-    GLuint  render_prog;
-    GLuint  render_vao;
-    GLuint  render_vbo;
-END_APP_DECLARATION()
-
-DEFINE_APP(ImageProcessingComputeExample, "Compute Shader Image Processing Example")
-
-void ImageProcessingComputeExample::Initialize(const char * title)
+bool ImageProcessingComputeExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     // Initialize our compute program
     compute_prog = glCreateProgram();
 
-    static const char compute_shader_source[] =
-        "#version 430 core\n"
-        "\n"
-        "layout (local_size_x = 1024) in;\n"
-        "\n"
-        "layout (rgba32f, binding = 0) uniform image2D input_image;\n"
-        "layout (rgba32f, binding = 1) uniform image2D output_image;\n"
-        "\n"
-        "shared vec4 scanline[1024];\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    ivec2 pos = ivec2(gl_GlobalInvocationID.xy);\n"
-        "    scanline[pos.x] = imageLoad(input_image, pos);\n"
-        "    barrier();\n"
-        "    imageStore(output_image, pos.yx, scanline[min(pos.x + 1, 1023)] - scanline[max(pos.x - 1, 0)]);\n"
-        "}\n"
-    ;
-
-    vglAttachShaderSource(compute_prog, GL_COMPUTE_SHADER, compute_shader_source);
+    vglAttachShaderFile(compute_prog, GL_COMPUTE_SHADER, "media/shaders/imageprocessing/imageprocessing.cs.glsl");
 
     glLinkProgram(compute_prog);
 
@@ -87,30 +44,8 @@ void ImageProcessingComputeExample::Initialize(const char * title)
     // Now create a simple program to visualize the result
     render_prog = glCreateProgram();
 
-    static const char render_vs[] =
-        "#version 430 core\n"
-        "\n"
-        "in vec4 vert;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = vert;\n"
-        "}\n";
-
-    static const char render_fs[] =
-        "#version 430 core\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "layout (binding = 0) uniform sampler2D output_image;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = abs(texture(output_image, vec2(1.0, -1.0) * vec2(gl_FragCoord.xy) / vec2(textureSize(output_image, 0)))) * 1.0;\n"
-        "}\n";
-
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/imageprocessing/render.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/imageprocessing/render.fs.glsl");
 
     glLinkProgram(render_prog);
 
@@ -129,9 +64,11 @@ void ImageProcessingComputeExample::Initialize(const char * title)
     };
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    return true;
 }
 
-void ImageProcessingComputeExample::Display(bool auto_redraw)
+void ImageProcessingComputeExample::OnDisplay()
 {
     // Activate the compute program and bind the output texture image
     glUseProgram(compute_prog);
@@ -154,10 +91,10 @@ void ImageProcessingComputeExample::Display(bool auto_redraw)
     glUseProgram(render_prog);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void ImageProcessingComputeExample::Finalize(void)
+void ImageProcessingComputeExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(compute_prog);
@@ -166,7 +103,16 @@ void ImageProcessingComputeExample::Finalize(void)
     glDeleteVertexArrays(1, &render_vao);
 }
 
-void ImageProcessingComputeExample::Resize(int width, int height)
+void ImageProcessingComputeExample::OnResize(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
+
+int main(int argc, char** argv)
+{
+    ImageProcessingComputeExample app;
+    AppConfig config{};
+    config.title = "Compute Shader Image Processing Example";
+    return app.Run(config);
+}
+

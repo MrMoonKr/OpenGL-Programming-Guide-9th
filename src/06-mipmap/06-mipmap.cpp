@@ -8,7 +8,7 @@
 // #define USE_GL3W
 #include <vermilion.h>
 
-#include "vapp.h"
+#include "06-mipmap.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -16,72 +16,16 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(MipmapExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Reshape(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint mipmap_prog;
-    GLuint vao;
-
-    GLuint cube_vbo;
-    GLuint cube_element_buffer;
-
-    GLuint tex;
-    GLint skybox_rotate_loc;
-
-    GLint object_mat_mvp_loc;
-    GLint object_mat_mv_loc;
-
-    VBObject object;
-END_APP_DECLARATION()
-
-DEFINE_APP(MipmapExample, "Mipmap Example")
-
-void MipmapExample::Initialize(const char * title)
+bool MipmapExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     mipmap_prog = glCreateProgram();
 
-    static const char skybox_shader_vs[] =
-        "#version 330 core\n"
-        "\n"
-        "layout (location = 0) in vec3 in_position;\n"
-        "layout (location = 1) in vec2 in_texcoord;\n"
-        "\n"
-        "out vec2 tex_coord;\n"
-        "\n"
-        "uniform mat4 tc_rotate;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = tc_rotate * vec4(in_position, 1.0);\n"
-        "    tex_coord = in_texcoord;\n"
-        "}\n"
-    ;
-
-    static const char skybox_shader_fs[] =
-        "#version 330 core\n"
-        "\n"
-        "in vec2 tex_coord;\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform sampler2D tex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = texture(tex, tex_coord);\n"
-        "}\n"
-    ;
-
-    vglAttachShaderSource(mipmap_prog, GL_VERTEX_SHADER, skybox_shader_vs);
-    vglAttachShaderSource(mipmap_prog, GL_FRAGMENT_SHADER, skybox_shader_fs);
+    vglAttachShaderFile(mipmap_prog, GL_VERTEX_SHADER, "media/shaders/mipmap/mipmap.vs.glsl");
+    vglAttachShaderFile(mipmap_prog, GL_FRAGMENT_SHADER, "media/shaders/mipmap/mipmap.fs.glsl");
 
     glLinkProgram(mipmap_prog);
 
@@ -152,9 +96,11 @@ void MipmapExample::Initialize(const char * title)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
     delete [] data;
+
+    return true;
 }
 
-void MipmapExample::Display(bool auto_redraw)
+void MipmapExample::OnDisplay()
 {
     static const unsigned int start_time = GetTickCount();
     float t = float((GetTickCount() - start_time)) / float(0x3FFF);
@@ -183,10 +129,10 @@ void MipmapExample::Display(bool auto_redraw)
     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, NULL);
     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, BUFFER_OFFSET(8 * sizeof(GLushort)));
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void MipmapExample::Finalize(void)
+void MipmapExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(mipmap_prog);
@@ -200,3 +146,12 @@ void MipmapExample::Reshape(int width, int height)
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    MipmapExample app;
+    AppConfig config{};
+    config.title = "Mipmap Example";
+    return app.Run(config);
+}
+

@@ -8,7 +8,7 @@
 #define USE_GL3W
 #include <vermilion.h>
 
-#include "vapp.h"
+#include "06-volumetexturing.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -16,66 +16,16 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(VolumeTextureExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint base_prog;
-    GLuint vao;
-
-    GLuint quad_vbo;
-
-    GLuint tex;
-    GLint tc_rotate_loc;
-END_APP_DECLARATION()
-
-DEFINE_APP(VolumeTextureExample, "Volume Texture Example")
-
-void VolumeTextureExample::Initialize(const char * title)
+bool VolumeTextureExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     base_prog = glCreateProgram();
 
-    static const char quad_shader_vs[] =
-        "#version 330 core\n"
-        "\n"
-        "layout (location = 0) in vec2 in_position;\n"
-        "layout (location = 1) in vec2 in_tex_coord;\n"
-        "\n"
-        "out vec3 tex_coord;\n"
-        "\n"
-        "uniform mat4 tc_rotate;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = vec4(in_position, 0.5, 1.0);\n"
-        "    tex_coord = (vec4(in_tex_coord, 0.0, 1.0) * tc_rotate).stp;\n"
-        "}\n"
-    ;
-
-    static const char quad_shader_fs[] =
-        "#version 330 core\n"
-        "\n"
-        "in vec3 tex_coord;\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform sampler3D tex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = texture(tex, tex_coord).rrrr;\n"
-        "}\n"
-    ;
-
-    vglAttachShaderSource(base_prog, GL_VERTEX_SHADER, quad_shader_vs);
-    vglAttachShaderSource(base_prog, GL_FRAGMENT_SHADER, quad_shader_fs);
+    vglAttachShaderFile(base_prog, GL_VERTEX_SHADER, "media/shaders/volumetexturing/volumetexturing.vs.glsl");
+    vglAttachShaderFile(base_prog, GL_FRAGMENT_SHADER, "media/shaders/volumetexturing/volumetexturing.fs.glsl");
 
     glGenBuffers(1, &quad_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
@@ -118,11 +68,13 @@ void VolumeTextureExample::Initialize(const char * title)
     glTexParameteri(image.target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 
     vglUnloadImage(&image);
+
+    return true;
 }
 
-void VolumeTextureExample::Display(bool auto_redraw)
+void VolumeTextureExample::OnDisplay()
 {
-    float t = float(app_time()) / float(0x3FFF);
+    float t = float(GetAppTime()) / float(0x3FFF);
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
     static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
@@ -147,10 +99,10 @@ void VolumeTextureExample::Display(bool auto_redraw)
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
     glDisable(GL_BLEND);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void VolumeTextureExample::Finalize(void)
+void VolumeTextureExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(base_prog);
@@ -158,9 +110,18 @@ void VolumeTextureExample::Finalize(void)
     glDeleteVertexArrays(1, &tex);
 }
 
-void VolumeTextureExample::Resize(int width, int height)
+void VolumeTextureExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    VolumeTextureExample app;
+    AppConfig config{};
+    config.title = "Volume Texture Example";
+    return app.Run(config);
+}
+

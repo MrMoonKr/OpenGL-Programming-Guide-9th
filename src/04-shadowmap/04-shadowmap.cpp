@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "04-shadowmap.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -20,62 +20,14 @@ using namespace vmath;
 #define FRUSTUM_DEPTH       800.0f
 #define DEPTH_TEXTURE_SIZE  2048
 
-BEGIN_APP_DECLARATION(ShadowMapExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-
-    // Program to render from the light's position
-    GLuint render_light_prog;
-    struct
-    {
-        GLint model_view_projection_matrix;
-    } render_light_uniforms;
-
-    // FBO to render depth with
-    GLuint  depth_fbo;
-    GLuint  depth_texture;
-
-    // Program to render the scene from the viewer's position
-    GLuint render_scene_prog;
-    struct
-    {
-        GLint model_matrix;
-        GLint view_matrix;
-        GLint projection_matrix;
-        GLint shadow_matrix;
-        GLint light_position;
-        GLint material_ambient;
-        GLint material_diffuse;
-        GLint material_specular;
-        GLint material_specular_power;
-    } render_scene_uniforms;
-
-    // Ground plane
-    GLuint  ground_vbo;
-    GLuint  ground_vao;
-
-    VBObject object;
-
-    GLint current_width;
-    GLint current_height;
-
-    void DrawScene(bool depth_only = false);
-END_APP_DECLARATION()
-
-DEFINE_APP(ShadowMapExample, "Shadow Mapping Example")
-
 #define INSTANCE_COUNT 100
 
-void ShadowMapExample::Initialize(const char * title)
+bool ShadowMapExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     // Create the program for rendering the scene from the light's POV.
     glCreateProgram();
 
@@ -168,11 +120,13 @@ void ShadowMapExample::Initialize(const char * title)
 
     // Load the object
     object.LoadFromVBM("media/armadillo_low.vbm", 0, 1, 2);
+
+    return true;
 }
 
-void ShadowMapExample::Display(bool auto_redraw)
+void ShadowMapExample::OnDisplay()
 {
-    float t = float(app_time() & 0xFFFF) / float(0xFFFF);
+    float t = float(GetAppTime() & 0xFFFF) / float(0xFFFF);
     static float q = 0.0f;
     static const vec3 X(1.0f, 0.0f, 0.0f);
     static const vec3 Y(0.0f, 1.0f, 0.0f);
@@ -241,7 +195,7 @@ void ShadowMapExample::Display(bool auto_redraw)
     DrawScene(false);
 
     // Done
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
 void ShadowMapExample::DrawScene(bool depth_only)
@@ -273,7 +227,7 @@ void ShadowMapExample::DrawScene(bool depth_only)
     glBindVertexArray(0);
 }
 
-void ShadowMapExample::Finalize(void)
+void ShadowMapExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_light_prog);
@@ -282,10 +236,18 @@ void ShadowMapExample::Finalize(void)
     glDeleteVertexArrays(1, &ground_vao);
 }
 
-void ShadowMapExample::Resize(int width, int height)
+void ShadowMapExample::OnResize(int width, int height)
 {
     current_width = width;
     current_height = height;
 
     aspect = float(height) / float(width);
+}
+
+int main(int argc, char** argv)
+{
+    ShadowMapExample app;
+    AppConfig config{};
+    config.title = "Shadow Mapping Example";
+    return app.Run(config);
 }

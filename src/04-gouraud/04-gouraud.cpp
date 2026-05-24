@@ -5,7 +5,7 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #include <vermilion.h>
-#include "vapp.h"
+#include "04-gouraud.h"
 #include "LoadShaders.h"
 
 enum VAO_IDs { Triangles, NumVAOs };
@@ -17,23 +17,17 @@ GLuint  Buffers[NumBuffers];
 
 const GLuint  NumVertices = 6;
 
-BEGIN_APP_DECLARATION(GouraudExample)
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void OnKey(int key, int scancode, int action, int mods);
-END_APP_DECLARATION()
-
-DEFINE_APP(GouraudExample, "Gouraud Example")
-
 //----------------------------------------------------------------------------
 //
 // init
 //
 
-void GouraudExample::Initialize(const char * title)
+bool GouraudExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     glGenVertexArrays( NumVAOs, VAOs );
     glBindVertexArray( VAOs[Triangles] );
 
@@ -73,6 +67,8 @@ void GouraudExample::Initialize(const char * title)
 
     glEnableVertexAttribArray( vColor );
     glEnableVertexAttribArray( vPosition );
+
+    return true;
 }
 
 void GouraudExample::OnKey(int key, int scancode, int action, int mods)
@@ -92,7 +88,7 @@ void GouraudExample::OnKey(int key, int scancode, int action, int mods)
         }
     }
 
-    base::OnKey(key, scancode, action, mods);
+    VermilionApplication::OnKey(key, scancode, action, mods);
 }
 
 //----------------------------------------------------------------------------
@@ -100,7 +96,7 @@ void GouraudExample::OnKey(int key, int scancode, int action, int mods)
 // display
 //
 
-void GouraudExample::Display(bool auto_redraw)
+void GouraudExample::OnDisplay()
 {
     glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
     glClear( GL_COLOR_BUFFER_BIT );
@@ -109,5 +105,14 @@ void GouraudExample::Display(bool auto_redraw)
     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
 
     // Done
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
+
+int main(int argc, char** argv)
+{
+    GouraudExample app;
+    AppConfig config{};
+    config.title = "Gouraud Example";
+    return app.Run(config);
+}
+

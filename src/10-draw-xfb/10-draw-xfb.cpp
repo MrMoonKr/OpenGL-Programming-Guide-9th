@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "10-draw-xfb.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -13,105 +13,24 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(ViewportArrayApplication)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint sort_prog;
-    GLuint render_prog;
-    GLuint vao[2];
-    GLuint vbo[2];
-    GLuint xfb;
-    VBObject object;
-
-    GLint model_matrix_pos;
-    GLint projection_matrix_pos;
-END_APP_DECLARATION()
-
-DEFINE_APP(ViewportArrayApplication, "DrawTransformFeedback Example")
-
-void ViewportArrayApplication::Initialize(const char * title)
+bool ViewportArrayApplication::OnInitialize(const AppConfig& config)
 {
     int i;
 
-    base::Initialize(title);
+    if (!VermilionApplication::OnInitialize(config))
 
+    {
+
+        return false;
+
+    }
     glGenTransformFeedbacks(1, &xfb);
     glBindTransformFeedback(GL_TRANSFORM_FEEDBACK, xfb);
 
     sort_prog = glCreateProgram();
 
-    static const char sort_vs_source[] =
-            "#version 410\n"
-            "\n"
-            "uniform mat4 model_matrix;\n"
-            "\n"
-            "layout (location = 0) in vec4 position;\n"
-            "layout (location = 1) in vec3 normal;\n"
-            "\n"
-            "out vec3 vs_normal;\n"
-            "\n"
-            "void main(void)\n"
-            "{\n"
-            "    vs_normal = (model_matrix * vec4(normal, 0.0)).xyz;\n"
-            "    gl_Position = model_matrix * position;\n"
-            "}\n";
-
-    static const char sort_gs_source[] =
-        "#version 410\n"
-        "\n"
-        "layout (triangles) in;\n"
-        "layout (points, max_vertices = 3) out;\n"
-        "\n"
-        "uniform mat4 projection_matrix;\n"
-        "\n"
-        "in vec3 vs_normal[];\n"
-        "\n"
-        "layout (stream = 0) out vec4 rf_position;\n"
-        "layout (stream = 0) out vec3 rf_normal;\n"
-        "\n"
-        "layout (stream = 1) out vec4 lf_position;\n"
-        "layout (stream = 1) out vec3 lf_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vec4 A = gl_in[0].gl_Position;\n"
-        "    vec4 B = gl_in[1].gl_Position;\n"
-        "    vec4 C = gl_in[2].gl_Position;\n"
-        "    vec3 AB = (B - A).xyz;\n"
-        "    vec3 AC = (C - A).xyz;\n"
-        "    vec3 face_normal = cross(AB, AC);\n"
-        "    int i;\n"
-        "\n"
-        "    if (face_normal.x < 0.0)\n"
-        "    {\n"
-        "        for (i = 0; i < gl_in.length(); i++)\n"
-        "        {\n"
-        "            rf_position = projection_matrix * (gl_in[i].gl_Position - vec4(30.0, 0.0, 0.0, 0.0));\n"
-        "            rf_normal = vs_normal[i];\n"
-        "            EmitStreamVertex(0);\n"
-        "        }\n"
-        "        EndStreamPrimitive(0);\n"
-        "    }\n"
-        "    else\n"
-        "    {\n"
-        "        for (i = 0; i < gl_in.length(); i++)\n"
-        "        {\n"
-        "            lf_position = projection_matrix * (gl_in[i].gl_Position + vec4(30.0, 0.0, 0.0, 0.0));\n"
-        "            lf_normal = vs_normal[i];\n"
-        "            EmitStreamVertex(1);\n"
-        "        }\n"
-        "        EndStreamPrimitive(1);\n"
-        "    }\n"
-        "}\n";
-
-    vglAttachShaderSource(sort_prog, GL_VERTEX_SHADER, sort_vs_source);
-    vglAttachShaderSource(sort_prog, GL_GEOMETRY_SHADER, sort_gs_source);
+    vglAttachShaderFile(sort_prog, GL_VERTEX_SHADER, "media/shaders/draw-xfb/sort.vs.glsl");
+    vglAttachShaderFile(sort_prog, GL_GEOMETRY_SHADER, "media/shaders/draw-xfb/sort.gs.glsl");
 
     static const char * varyings[] =
     {
@@ -147,45 +66,19 @@ void ViewportArrayApplication::Initialize(const char * title)
 
     render_prog = glCreateProgram();
 
-    static const char render_vs_source[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) in vec4 position;\n"
-        "layout (location = 1) in vec3 normal;\n"
-        "\n"
-        "out vec3 vs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vs_normal = normal;\n"
-        "    gl_Position = position;\n"
-        "}\n";
-
-    static const char render_fs_source[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform vec4 pass_color;\n"
-        "\n"
-        "in vec3 vs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = pass_color * (0.2 + pow(abs(vs_normal.z), 4.0)) + vec4(1.0, 1.0, 1.0, 0.0) * pow(abs(vs_normal.z), 37.0);\n"
-        "}\n";
-
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs_source);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs_source);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/draw-xfb/render.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/draw-xfb/render.fs.glsl");
 
     glLinkProgram(render_prog);
 
     object.LoadFromVBM("media/ninja.vbm", 0, 1, 2);
+
+    return true;
 }
 
-void ViewportArrayApplication::Display(bool auto_redraw)
+void ViewportArrayApplication::OnDisplay()
 {
-    float t = float(app_time() & 0x3FFF) / float(0x3FFF);
+    float t = float(GetAppTime() & 0x3FFF) / float(0x3FFF);
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
     static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
@@ -242,10 +135,10 @@ void ViewportArrayApplication::Display(bool auto_redraw)
     glBindVertexArray(vao[1]);
     glDrawTransformFeedbackStream(GL_TRIANGLES, xfb, 1);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void ViewportArrayApplication::Finalize(void)
+void ViewportArrayApplication::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(sort_prog);
@@ -253,9 +146,18 @@ void ViewportArrayApplication::Finalize(void)
     glDeleteBuffers(2, vbo);
 }
 
-void ViewportArrayApplication::Resize(int width, int height)
+void ViewportArrayApplication::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    ViewportArrayApplication app;
+    AppConfig config{};
+    config.title = "DrawTransformFeedback Example";
+    return app.Run(config);
+}
+

@@ -64,6 +64,14 @@
       ]
     },
     {
+      "label": "build-debug:00-window",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "00-window"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
       "label": "build-debug:01-keypress",
       "type": "shell",
       "command": "cmake",

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2012-2015 Graham Sellers
+ * Copyright 2012-2015 Graham Sellers
  *
  * This code is part of the OpenGL Programming Guide, 9th Edition.
  *
@@ -27,7 +27,7 @@
 #include <vermilion.h>
 
 #include "vgl.h"
-#include "vapp.h"
+#include "09-simpletess.h"
 #include "mat.h"
 #include "CheckError.h"
 #include "LoadShaders.h"
@@ -39,24 +39,14 @@ const GLfloat  zFar  = 3.0;
 
 const int  NumVertices = 4;  // vertices in our patch
 
-BEGIN_APP_DECLARATION(SimpleTssellationExample)
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void OnKey(int key, int scancode, int action, int mods);
-    virtual void Resize(int width, int height);
-
-    float aspect;
-END_APP_DECLARATION()
-
-DEFINE_APP(SimpleTssellationExample, "Tessellation Example")
-
 //----------------------------------------------------------------------------
 
-void SimpleTssellationExample::Initialize(const char * title)
+bool SimpleTssellationExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     // Create a vertex array object
     enum { Patch, NumVAOs };
     GLuint VAOs[NumVAOs];
@@ -68,7 +58,7 @@ void SimpleTssellationExample::Initialize(const char * title)
     GLuint buffers[NumBuffers];
     glGenBuffers( NumBuffers, buffers );
     glBindBuffer( GL_ARRAY_BUFFER, buffers[Array] );
-    
+
     GLfloat vertices[NumVertices][2] = {
 	{ -0.5, -0.5 },
 	{  0.5, -0.5 },
@@ -98,7 +88,7 @@ void SimpleTssellationExample::Initialize(const char * title)
 			   BUFFER_OFFSET(0) );
 
     PLoc = glGetUniformLocation( program, "P" );
-    
+
     mat4  modelview = Translate( 0.0f, 0.0f, -0.5f * (zNear + zFar) ) *
 	RotateX( -50.0 );
     glUniformMatrix4fv( glGetUniformLocation( program, "MV" ),
@@ -109,11 +99,13 @@ void SimpleTssellationExample::Initialize(const char * title)
     glEnable( GL_DEPTH_TEST );
 
     glClearColor( 0.0, 0.0, 0.0, 1.0 );
+
+    return true;
 }
 
 //----------------------------------------------------------------------------
 
-void SimpleTssellationExample::Display(bool auto_redraw)
+void SimpleTssellationExample::OnDisplay()
 {
     mat4  projection = Perspective( 60.0, aspect, zNear, zFar );
     glUniformMatrix4fv( PLoc, 1, GL_TRUE, projection );
@@ -121,13 +113,13 @@ void SimpleTssellationExample::Display(bool auto_redraw)
     glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     glDrawArrays( GL_PATCHES, 0, NumVertices );
 
-    base::Display(auto_redraw);
+    VermilionApplication::OnDisplay();
 }
 
 //----------------------------------------------------------------------------
 
-void SimpleTssellationExample::Resize(int width, int height)
-{    
+void SimpleTssellationExample::OnResize(int width, int height)
+{
     glViewport( 0, 0, width, height );
 
     aspect = GLfloat(width) / height;
@@ -135,7 +127,7 @@ void SimpleTssellationExample::Resize(int width, int height)
 
 //----------------------------------------------------------------------------
 
-void SimpleTssellationExample::Finalize(void)
+void SimpleTssellationExample::OnShutdown()
 {
 }
 
@@ -156,5 +148,14 @@ void SimpleTssellationExample::OnKey(int key, int scancode, int action, int mods
         }
     }
 
-    base::OnKey(key, scancode, action, mods);
+    VermilionApplication::OnKey(key, scancode, action, mods);
 }
+
+int main(int argc, char** argv)
+{
+    SimpleTssellationExample app;
+    AppConfig config{};
+    config.title = "Tessellation Example";
+    return app.Run(config);
+}
+

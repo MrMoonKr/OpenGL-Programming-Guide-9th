@@ -4,15 +4,9 @@
 //
 //////////////////////////////////////////////////////////////////////////////
 
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <windows.h>
-#endif
-
 #include "vgl.h"
 #include "LoadShaders.h"
+#include "vapp.h"
 
 enum VAO_IDs { Triangles, NumVAOs };
 enum Buffer_IDs { ArrayBuffer, NumBuffers };
@@ -79,23 +73,38 @@ display( void )
 // main
 //
 
-#ifdef _WIN32
-int CALLBACK WinMain(
-  _In_ HINSTANCE hInstance,
-  _In_ HINSTANCE hPrevInstance,
-  _In_ LPSTR     lpCmdLine,
-  _In_ int       nCmdShow
-)
-#else
-int
-main( int argc, char** argv )
-#endif
+int main(int argc, char** argv)
 {
+    (void)argc;
+    (void)argv;
+
+    AppConfig config{};
+    config.title = "Triangles";
+
     glfwInit();
 
-    GLFWwindow* window = glfwCreateWindow(800, 600, "Triangles", NULL, NULL);
+    glfwDefaultWindowHints();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, config.gl_major);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, config.gl_minor);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    glfwWindowHint(GLFW_RESIZABLE, config.resizable ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_VISIBLE, config.visible ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_DECORATED, config.decorated ? GLFW_TRUE : GLFW_FALSE);
+    glfwWindowHint(GLFW_MAXIMIZED, config.maximized ? GLFW_TRUE : GLFW_FALSE);
+#ifdef GLFW_SCALE_TO_MONITOR
+    glfwWindowHint(GLFW_SCALE_TO_MONITOR, config.scaleToMonitor ? GLFW_TRUE : GLFW_FALSE);
+#endif
+#ifdef GLFW_COCOA_RETINA_FRAMEBUFFER
+    glfwWindowHint(GLFW_COCOA_RETINA_FRAMEBUFFER, config.highDpiFramebuffer ? GLFW_TRUE : GLFW_FALSE);
+#endif
+#ifdef __APPLE__
+    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
+#endif
+
+    GLFWwindow* window = glfwCreateWindow(config.width, config.height, config.title, NULL, NULL);
 
     glfwMakeContextCurrent(window);
+    glfwSwapInterval(config.vsync ? 1 : 0);
 
     if (gladLoadGL(glfwGetProcAddress) == 0)
     {

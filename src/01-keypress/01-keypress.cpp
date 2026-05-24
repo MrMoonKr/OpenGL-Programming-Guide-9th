@@ -7,7 +7,7 @@
 #include <vermilion.h>
 
 #include "vgl.h"
-#include "vapp.h"
+#include "01-keypress.h"
 #include "LoadShaders.h"
 
 enum VAO_IDs { Triangles, NumVAOs };
@@ -19,24 +19,17 @@ GLuint  Buffers[NumBuffers];
 
 const GLuint  NumVertices = 6;
 
-BEGIN_APP_DECLARATION(KeyPressExample)
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-    void OnKey(int key, int scancode, int action, int mods);
-END_APP_DECLARATION()
-
-DEFINE_APP(KeyPressExample, "Key Press Example")
 //----------------------------------------------------------------------------
 //
 // init
 //
 
-void KeyPressExample::Initialize(const char * title)
+bool KeyPressExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     glGenVertexArrays( NumVAOs, VAOs );
     glBindVertexArray( VAOs[Triangles] );
 
@@ -62,6 +55,8 @@ void KeyPressExample::Initialize(const char * title)
     glVertexAttribPointer( vPosition, 2, GL_FLOAT,
                            GL_FALSE, 0, BUFFER_OFFSET(0) );
     glEnableVertexAttribArray( vPosition );
+
+    return true;
 }
 
 void KeyPressExample::OnKey(int key, int scancode, int action, int mods)
@@ -81,7 +76,7 @@ void KeyPressExample::OnKey(int key, int scancode, int action, int mods)
         }
     }
 
-    base::OnKey(key, scancode, action, mods);
+    VermilionApplication::OnKey(key, scancode, action, mods);
 }
 
 //----------------------------------------------------------------------------
@@ -89,22 +84,30 @@ void KeyPressExample::OnKey(int key, int scancode, int action, int mods)
 // display
 //
 
-void KeyPressExample::Display(bool auto_redraw)
+void KeyPressExample::OnDisplay()
 {
     glClear( GL_COLOR_BUFFER_BIT );
 
     glBindVertexArray( VAOs[Triangles] );
     glDrawArrays( GL_TRIANGLES, 0, NumVertices );
 
-    base::Display(auto_redraw);
+    VermilionApplication::OnDisplay();
 }
 
-void KeyPressExample::Resize(int width, int height)
+void KeyPressExample::OnResize(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
 
-void KeyPressExample::Finalize(void)
+void KeyPressExample::OnShutdown()
 {
 
+}
+
+int main(int argc, char** argv)
+{
+    KeyPressExample app;
+    AppConfig config{};
+    config.title = "Key Press Example";
+    return app.Run(config);
 }

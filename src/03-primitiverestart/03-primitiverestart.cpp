@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "03-primitiverestart.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -19,30 +19,12 @@ using namespace vmath;
 // Define USE_PRIMITIVE_RESTART to 0 to use two separate draw commands
 #define USE_PRIMITIVE_RESTART 1
 
-BEGIN_APP_DECLARATION(PrimitiveRestartExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint render_prog;
-    GLuint vao[1];
-    GLuint vbo[1];
-    GLuint ebo[1];
-
-    GLint render_model_matrix_loc;
-    GLint render_projection_matrix_loc;
-END_APP_DECLARATION()
-
-DEFINE_APP(PrimitiveRestartExample, "Primitive Restart Example")
-
-void PrimitiveRestartExample::Initialize(const char * title)
+bool PrimitiveRestartExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     static ShaderInfo shader_info[] =
     {
         { GL_VERTEX_SHADER, "media/shaders/primitive_restart/primitive_restart.vs.glsl" },
@@ -113,11 +95,13 @@ void PrimitiveRestartExample::Initialize(const char * title)
     glEnableVertexAttribArray(1);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    return true;
 }
 
-void PrimitiveRestartExample::Display(bool auto_redraw)
+void PrimitiveRestartExample::OnDisplay()
 {
-    float t = float(app_time() & 0x1FFF) / float(0x1FFF);
+    float t = float(GetAppTime() & 0x1FFF) / float(0x1FFF);
     static float q = 0.0f;
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
@@ -154,10 +138,10 @@ void PrimitiveRestartExample::Display(bool auto_redraw)
     glDrawElements(GL_TRIANGLE_STRIP, 8, GL_UNSIGNED_SHORT, (const GLvoid *)(9 * sizeof(GLushort)));
 #endif
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void PrimitiveRestartExample::Finalize(void)
+void PrimitiveRestartExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_prog);
@@ -165,9 +149,18 @@ void PrimitiveRestartExample::Finalize(void)
     glDeleteBuffers(1, vbo);
 }
 
-void PrimitiveRestartExample::Resize(int width, int height)
+void PrimitiveRestartExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    PrimitiveRestartExample app;
+    AppConfig config{};
+    config.title = "Primitive Restart Example";
+    return app.Run(config);
+}
+

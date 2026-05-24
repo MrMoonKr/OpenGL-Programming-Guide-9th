@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "10-viewport-array.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -13,97 +13,17 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(ViewportArrayApplication)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint prog;
-    GLuint vao;
-    GLuint vbo;
-    VBObject object;
-
-    GLint model_matrix_pos;
-    GLint projection_matrix_pos;
-END_APP_DECLARATION()
-
-DEFINE_APP(ViewportArrayApplication, "Viewport Array")
-
-void ViewportArrayApplication::Initialize(const char * title)
+bool ViewportArrayApplication::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     prog = glCreateProgram();
 
-    static const char vertex_shader_source[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) in vec4 position;\n"
-        "layout (location = 1) in vec3 normal;\n"
-        "\n"
-        "out vec3 vs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vs_normal = normal;\n"
-        "    gl_Position = position;\n"
-        "}\n";
-
-    static const char geometry_shader_source[] =
-        "#version 410\n"
-        "\n"
-        "layout (triangles, invocations = 4) in;\n"
-        "layout (triangle_strip, max_vertices = 3) out;\n"
-        "\n"
-        "uniform mat4 model_matrix[4];\n"
-        "uniform mat4 projection_matrix;\n"
-        "\n"
-        "in vec3 vs_normal[];\n"
-        "\n"
-        "out vec4 gs_color;\n"
-        "out vec3 gs_normal;\n"
-        "\n"
-        "const vec4 colors[4] = vec4[4]\n"
-        "(\n"
-        "    vec4(1.0, 0.7, 0.3, 1.0),\n"
-        "    vec4(1.0, 0.2, 0.3, 1.0),\n"
-        "    vec4(0.1, 0.6, 1.0, 1.0),\n"
-        "    vec4(0.3, 0.7, 0.5, 1.0)\n"
-        ");\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    for (int i = 0; i < gl_in.length(); i++)\n"
-        "    {\n"
-        "        gl_ViewportIndex = gl_InvocationID;\n"
-        "        gs_color = colors[gl_InvocationID];\n"
-        "        gs_normal = (model_matrix[gl_InvocationID] * vec4(vs_normal[i], 0.0)).xyz;\n"
-        "        gl_Position = projection_matrix *\n"
-        "                      (model_matrix[gl_InvocationID] * gl_in[i].gl_Position);\n"
-        "        EmitVertex();\n"
-        "    }\n"
-        "}\n";
-
-    static const char fragment_shader_source[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "in vec4 gs_color;\n"
-        "in vec3 gs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = gs_color * (0.2 + pow(abs(gs_normal.z), 4.0)) + vec4(1.0, 1.0, 1.0, 0.0) * pow(abs(gs_normal.z), 37.0);\n"
-        "}\n";
-
-    vglAttachShaderSource(prog, GL_VERTEX_SHADER, vertex_shader_source);
-    vglAttachShaderSource(prog, GL_GEOMETRY_SHADER, geometry_shader_source);
-    vglAttachShaderSource(prog, GL_FRAGMENT_SHADER, fragment_shader_source);
+    vglAttachShaderFile(prog, GL_VERTEX_SHADER, "media/shaders/viewport-array/viewport-array.vs.glsl");
+    vglAttachShaderFile(prog, GL_GEOMETRY_SHADER, "media/shaders/viewport-array/viewport-array.gs.glsl");
+    vglAttachShaderFile(prog, GL_FRAGMENT_SHADER, "media/shaders/viewport-array/viewport-array.fs.glsl");
 
     glLinkProgram(prog);
     glUseProgram(prog);
@@ -112,11 +32,13 @@ void ViewportArrayApplication::Initialize(const char * title)
     projection_matrix_pos = glGetUniformLocation(prog, "projection_matrix");
 
     object.LoadFromVBM("media/ninja.vbm", 0, 1, 2);
+
+    return true;
 }
 
-void ViewportArrayApplication::Display(bool auto_redraw)
+void ViewportArrayApplication::OnDisplay()
 {
-    float t = float(app_time() & 0x3FFF) / float(0x3FFF);
+    float t = float(GetAppTime() & 0x3FFF) / float(0x3FFF);
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
     static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
@@ -148,10 +70,10 @@ void ViewportArrayApplication::Display(bool auto_redraw)
     glDepthFunc(GL_LEQUAL);
     object.Render();
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void ViewportArrayApplication::Finalize(void)
+void ViewportArrayApplication::OnShutdown()
 {
     glUseProgram(0);
     glDeleteBuffers(1, &vbo);
@@ -159,7 +81,7 @@ void ViewportArrayApplication::Finalize(void)
     glDeleteVertexArrays(1, &vao);
 }
 
-void ViewportArrayApplication::Resize(int width, int height)
+void ViewportArrayApplication::OnResize(int width, int height)
 {
     const float wot = float(width) * 0.5f;
     const float hot = float(height) * 0.5f;
@@ -171,3 +93,12 @@ void ViewportArrayApplication::Resize(int width, int height)
 
     aspect = hot / wot;
 }
+
+int main(int argc, char** argv)
+{
+    ViewportArrayApplication app;
+    AppConfig config{};
+    config.title = "Viewport Array";
+    return app.Run(config);
+}
+

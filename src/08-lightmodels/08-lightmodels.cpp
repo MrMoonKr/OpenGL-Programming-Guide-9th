@@ -8,7 +8,7 @@
 // #define USE_GL3W
 #include <vermilion.h>
 
-#include "vapp.h"
+#include "08-lightmodels.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -16,87 +16,17 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(LightingExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Texture for compute shader to write into
-    GLuint  output_image;
-
-    // Program, vao and vbo to render a full screen quad
-    GLuint  render_prog;
-
-    // Uniform locations
-    GLint   mv_mat_loc;
-    GLint   prj_mat_loc;
-    GLint   col_amb_loc;
-    GLint   col_diff_loc;
-    GLint   col_spec_loc;
-
-    // Object to render
-    VBObject    object;
-END_APP_DECLARATION()
-
-DEFINE_APP(LightingExample, "Lighting Example")
-
-void LightingExample::Initialize(const char * title)
+bool LightingExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     // Now create a simple program to visualize the result
     render_prog = glCreateProgram();
 
-    static const char render_vs[] =
-        "#version 430 core\n"
-        "\n"
-        "uniform mat4 model_matrix;\n"
-        "uniform mat4 proj_matrix;\n"
-        "\n"
-        "layout (location = 0) in vec4 position;\n"
-        "layout (location = 1) in vec3 normal;\n"
-        "\n"
-        "out vec3 vs_worldpos;\n"
-        "out vec3 vs_normal;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vec4 position = proj_matrix * model_matrix * position;\n"
-        "    gl_Position = position;\n"
-        "    vs_worldpos = position.xyz;\n"
-        "    vs_normal = mat3(model_matrix) * normal;\n"
-        "}\n"
-        ;
-
-    static const char render_fs[] =
-        "#version 430 core\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "in vec3 vs_worldpos;\n"
-        "in vec3 vs_normal;\n"
-        "\n"
-        "uniform vec4 color_ambient = vec4(0.1, 0.2, 0.5, 1.0);\n"
-        "uniform vec4 color_diffuse = vec4(0.2, 0.3, 0.6, 1.0);\n"
-        "uniform vec4 color_specular = vec4(0.0); // vec4(1.0, 1.0, 1.0, 1.0);\n"
-        "uniform float shininess = 77.0f;\n"
-        "\n"
-        "uniform vec3 light_position = vec3(12.0f, 32.0f, 560.0f);\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vec3 light_direction = normalize(light_position - vs_worldpos);\n"
-        "    vec3 normal = normalize(vs_normal);\n"
-        "    vec3 half_vector = normalize(light_direction + normalize(vs_worldpos));\n"
-        "    float diffuse = max(0.0, dot(normal, light_direction));\n"
-        "    float specular = pow(max(0.0, dot(vs_normal, half_vector)), shininess);\n"
-        "    color = color_ambient + diffuse * color_diffuse + specular * color_specular;\n"
-        "}\n";
-
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/lightmodels/lightmodels.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/lightmodels/lightmodels.fs.glsl");
 
     glLinkProgram(render_prog);
 
@@ -107,11 +37,13 @@ void LightingExample::Initialize(const char * title)
     col_spec_loc = glGetUniformLocation(render_prog, "color_specular");
 
     object.LoadFromVBM("media/torus.vbm", 0, 1, 2);
+
+    return true;
 }
 
-void LightingExample::Display(bool auto_redraw)
+void LightingExample::OnDisplay()
 {
-    float time = float(app_time() & 0xFFFF) / float(0xFFFF);
+    float time = float(GetAppTime() & 0xFFFF) / float(0xFFFF);
 
     vmath::mat4 mv_matrix = vmath::translate(0.0f, 0.0f, -60.0f) *
                             vmath::rotate(987.0f * time * 3.14159f, vmath::vec3(0.0f, 0.0f, 1.0f)) *
@@ -132,17 +64,26 @@ void LightingExample::Display(bool auto_redraw)
 
     object.Render();
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void LightingExample::Finalize(void)
+void LightingExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_prog);
     glDeleteTextures(1, &output_image);
 }
 
-void LightingExample::Resize(int width, int height)
+void LightingExample::OnResize(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
+
+int main(int argc, char** argv)
+{
+    LightingExample app;
+    AppConfig config{};
+    config.title = "Lighting Example";
+    return app.Run(config);
+}
+

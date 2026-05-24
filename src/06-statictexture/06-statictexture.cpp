@@ -8,7 +8,7 @@
 #define USE_GL3W
 #include <vermilion.h>
 
-#include "vapp.h"
+#include "06-statictexture.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -16,63 +16,16 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(LoadTextureExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint base_prog;
-    GLuint vao;
-
-    GLuint quad_vbo;
-
-    GLuint tex;
-END_APP_DECLARATION()
-
-DEFINE_APP(LoadTextureExample, "Simple Static Texture Example")
-
-void LoadTextureExample::Initialize(const char * title)
+bool LoadTextureExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     base_prog = glCreateProgram();
 
-    static const char quad_shader_vs[] =
-        "#version 330 core\n"
-        "\n"
-        "layout (location = 0) in vec2 in_position;\n"
-        "layout (location = 1) in vec2 in_tex_coord;\n"
-        "\n"
-        "out vec2 tex_coord;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = vec4(in_position, 0.5, 1.0);\n"
-        "    tex_coord = in_tex_coord;\n"
-        "}\n"
-    ;
-
-    static const char quad_shader_fs[] =
-        "#version 330 core\n"
-        "\n"
-        "in vec2 tex_coord;\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform sampler2D tex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = texture(tex, tex_coord);\n"
-        "}\n"
-    ;
-
-    vglAttachShaderSource(base_prog, GL_VERTEX_SHADER, quad_shader_vs);
-    vglAttachShaderSource(base_prog, GL_FRAGMENT_SHADER, quad_shader_fs);
+    vglAttachShaderFile(base_prog, GL_VERTEX_SHADER, "media/shaders/statictexture/statictexture.vs.glsl");
+    vglAttachShaderFile(base_prog, GL_FRAGMENT_SHADER, "media/shaders/statictexture/statictexture.fs.glsl");
 
     glGenBuffers(1, &quad_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, quad_vbo);
@@ -134,11 +87,13 @@ void LoadTextureExample::Initialize(const char * title)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
     glGenerateMipmap(GL_TEXTURE_2D);
+
+    return true;
 }
 
-void LoadTextureExample::Display(bool auto_redraw)
+void LoadTextureExample::OnDisplay()
 {
-    float t = float(app_time() & 0x3FFF) / float(0x3FFF);
+    float t = float(GetAppTime() & 0x3FFF) / float(0x3FFF);
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
     static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
@@ -153,10 +108,10 @@ void LoadTextureExample::Display(bool auto_redraw)
     glBindVertexArray(vao);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void LoadTextureExample::Finalize(void)
+void LoadTextureExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(base_prog);
@@ -164,9 +119,18 @@ void LoadTextureExample::Finalize(void)
     glDeleteVertexArrays(1, &tex);
 }
 
-void LoadTextureExample::Resize(int width, int height)
+void LoadTextureExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    LoadTextureExample app;
+    AppConfig config{};
+    config.title = "Simple Static Texture Example";
+    return app.Run(config);
+}
+

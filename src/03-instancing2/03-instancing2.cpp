@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "03-instancing2.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -16,103 +16,24 @@
 
 using namespace vmath;
 
-BEGIN_APP_DECLARATION(InstancingExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-
-    GLuint color_buffer;
-    GLuint model_matrix_buffer;
-    GLuint render_prog;
-    GLint model_matrix_loc;
-    GLint view_matrix_loc;
-    GLint projection_matrix_loc;
-
-    VBObject object;
-END_APP_DECLARATION()
-
-DEFINE_APP(InstancingExample, "Instancing Example")
-
 #define INSTANCE_COUNT 100
 
-void InstancingExample::Initialize(const char * title)
+bool InstancingExample::OnInitialize(const AppConfig& config)
 {
     int n;
 
-    base::Initialize(title);
+    if (!VermilionApplication::OnInitialize(config))
 
+    {
+
+        return false;
+
+    }
     // Create the program for rendering the model
     render_prog = glCreateProgram();
 
-    // This is the rendering vertex shader
-    static const char render_vs[] =
-        "#version 330\n"
-        "\n"
-        "// 'position' and 'normal' are regular vertex attributes\n"
-        "layout (location = 0) in vec4 position;\n"
-        "layout (location = 1) in vec3 normal;\n"
-        "\n"
-        "// Color is a per-instance attribute\n"
-        "layout (location = 2) in vec4 color;\n"
-        "\n"
-        "// model_matrix will be used as a per-instance transformation\n"
-        "// matrix. Note that a mat4 consumes 4 consecutive locations, so\n"
-        "// this will actually sit in locations, 3, 4, 5, and 6.\n"
-        "layout (location = 3) in mat4 model_matrix;\n"
-        "\n"
-        "// The view matrix and the projection matrix are constant across a draw\n"
-        "uniform mat4 view_matrix;\n"
-        "uniform mat4 projection_matrix;\n"
-        "\n"
-        "// The output of the vertex shader (matched to the fragment shader)\n"
-        "out VERTEX\n"
-        "{\n"
-        "    vec3    normal;\n"
-        "    vec4    color;\n"
-        "} vertex;\n"
-        "\n"
-        "// Ok, go!\n"
-        "void main(void)\n"
-        "{\n"
-        "    // Construct a model-view matrix from the uniform view matrix\n"
-        "    // and the per-instance model matrix.\n"
-        "    mat4 model_view_matrix = view_matrix * model_matrix;\n"
-        "\n"
-        "    // Transform position by the model-view matrix, then by the\n"
-        "    // projection matrix.\n"
-        "    gl_Position = projection_matrix * (model_view_matrix * position);\n"
-        "    // Transform the normal by the upper-left-3x3-submatrix of the\n"
-        "    // model-view matrix\n"
-        "    vertex.normal = mat3(model_view_matrix) * normal;\n"
-        "    // Pass the per-instance color through to the fragment shader.\n"
-        "    vertex.color = color;\n"
-        "}\n";
-
-    // Simple fragment shader
-    static const char render_fs[] =
-        "#version 330\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "in VERTEX\n"
-        "{\n"
-        "    vec3    normal;\n"
-        "    vec4    color;\n"
-        "} vertex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = vertex.color * (0.1 + abs(vertex.normal.z)) + vec4(0.8, 0.9, 0.7, 1.0) * pow(abs(vertex.normal.z), 40.0);\n"
-        "}\n";
-
-    // Compile and link like normal
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/instancing2/instancing2.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/instancing2/instancing2.fs.glsl");
 
     glLinkProgram(render_prog);
     glUseProgram(render_prog);
@@ -203,6 +124,8 @@ void InstancingExample::Initialize(const char * title)
 
     // Done (unbind the object's VAO)
     glBindVertexArray(0);
+
+    return true;
 }
 
 static inline int min(int a, int b)
@@ -210,9 +133,9 @@ static inline int min(int a, int b)
     return a < b ? a : b;
 }
 
-void InstancingExample::Display(bool auto_redraw)
+void InstancingExample::OnDisplay()
 {
-    float t = float(app_time() & 0x3FFF) / float(0x3FFF);
+    float t = float(GetAppTime() & 0x3FFF) / float(0x3FFF);
     static float q = 0.0f;
     static const vec3 X(1.0f, 0.0f, 0.0f);
     static const vec3 Y(0.0f, 1.0f, 0.0f);
@@ -262,10 +185,10 @@ void InstancingExample::Display(bool auto_redraw)
 
     lookat(vec3(0.0f, 0.0f, 0.0f), vec3(1.0f, 0.0f, 0.0f), vec3(0.0f, 1.0f, 0.0f));
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void InstancingExample::Finalize(void)
+void InstancingExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_prog);
@@ -273,9 +196,18 @@ void InstancingExample::Finalize(void)
     glDeleteBuffers(1, &model_matrix_buffer);
 }
 
-void InstancingExample::Resize(int width, int height)
+void InstancingExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    InstancingExample app;
+    AppConfig config{};
+    config.title = "Instancing Example";
+    return app.Run(config);
+}
+

@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "11-oit.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -28,65 +28,18 @@ using namespace vmath;
 
 #define FRUSTUM_DEPTH 2000.0f
 
-BEGIN_APP_DECLARATION(OITDemo)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-    virtual void OnKey(int key, int scancode, int action, int mods);
-
-    // Member variables
-    float aspect;
-
-    // Program to construct the linked list (renders the transparent objects)
-    GLuint  list_build_program;
-
-    // Head pointer image and PBO for clearing it
-    GLuint  head_pointer_texture;
-    GLuint  head_pointer_clear_buffer;
-    // Atomic counter buffer
-    GLuint  atomic_counter_buffer;
-    // Linked list buffer
-    GLuint  linked_list_buffer;
-    GLuint  linked_list_texture;
-
-    // Program to render the scene
-    GLuint render_scene_prog;
-    struct
-    {
-        GLint aspect;
-        GLint time;
-        GLint model_matrix;
-        GLint view_matrix;
-        GLint projection_matrix;
-    } render_scene_uniforms;
-
-    // Program to resolve 
-    GLuint resolve_program;
-
-    // Full Screen Quad
-    GLuint  quad_vbo;
-    GLuint  quad_vao;
-
-    GLint current_width;
-    GLint current_height;
-
-    VBObject object;
-
-    void DrawScene(void);
-    void InitPrograms(void);
-END_APP_DECLARATION()
-
-DEFINE_APP(OITDemo, "Order Independent Transparency")
-
-void OITDemo::Initialize(const char * title)
+bool OITDemo::OnInitialize(const AppConfig& config)
 {
     GLuint * data;
     render_scene_prog = -1;
 
-    base::Initialize(title);
+    if (!VermilionApplication::OnInitialize(config))
 
+    {
+
+        return false;
+
+    }
     InitPrograms();
 
     // Create head pointer texture
@@ -147,6 +100,8 @@ void OITDemo::Initialize(const char * title)
     glClearDepth(1.0f);
 
     object.LoadFromVBM("media/unit_pipe.vbm", 0, 1, 2);
+
+    return true;
 }
 
 void OITDemo::InitPrograms()
@@ -180,11 +135,11 @@ void OITDemo::InitPrograms()
     resolve_program = LoadShaders(resolve_shaders);
 }
 
-void OITDemo::Display(bool auto_redraw)
+void OITDemo::OnDisplay()
 {
     float t;
 
-    unsigned int current_time = app_time();
+    unsigned int current_time = GetAppTime();
 
     t = (float)(current_time & 0xFFFFF) / (float)0x3FFF;
 
@@ -239,7 +194,7 @@ void OITDemo::Display(bool auto_redraw)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     // Done
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
 void OITDemo::DrawScene(void)
@@ -249,7 +204,7 @@ void OITDemo::DrawScene(void)
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void OITDemo::Finalize(void)
+void OITDemo::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_scene_prog);
@@ -257,7 +212,7 @@ void OITDemo::Finalize(void)
     glDeleteVertexArrays(1, &quad_vao);
 }
 
-void OITDemo::Resize(int width, int height)
+void OITDemo::OnResize(int width, int height)
 {
     current_width = width;
     current_height = height;
@@ -276,3 +231,12 @@ void OITDemo::OnKey(int key, int scancode, int action, int mods)
             break;
     }
 }
+
+int main(int argc, char** argv)
+{
+    OITDemo app;
+    AppConfig config{};
+    config.title = "Order Independent Transparency";
+    return app.Run(config);
+}
+

@@ -9,7 +9,7 @@
 #include <vermilion.h>
 
 #include "vgl.h"
-#include "vapp.h"
+#include "12-particlesimulator.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -21,60 +21,8 @@ enum
 {
     PARTICLE_GROUP_SIZE     = 1024,
     PARTICLE_GROUP_COUNT    = 8192,
-    PARTICLE_COUNT          = (PARTICLE_GROUP_SIZE * PARTICLE_GROUP_COUNT),
-    MAX_ATTRACTORS          = 64
+    PARTICLE_COUNT          = (PARTICLE_GROUP_SIZE * PARTICLE_GROUP_COUNT)
 };
-
-BEGIN_APP_DECLARATION(ComputeParticleSimulator)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Compute program
-    GLuint  compute_prog;
-    GLint   dt_location;
-
-    // Posisition and velocity buffers
-    union
-    {
-        struct
-        {
-            GLuint position_buffer;
-            GLuint velocity_buffer;
-        };
-        GLuint buffers[2];
-    };
-
-    // TBOs
-    union
-    {
-        struct
-        {
-            GLuint position_tbo;
-            GLuint velocity_tbo;
-        };
-        GLuint tbos[2];
-    };
-
-    // Attractor UBO
-    GLuint  attractor_buffer;
-
-    // Program, vao and vbo to render a full screen quad
-    GLuint  render_prog;
-    GLuint  render_vao;
-    GLuint  render_vbo;
-
-    // Mass of the attractors
-    float attractor_masses[MAX_ATTRACTORS];
-
-    float aspect_ratio;
-END_APP_DECLARATION()
-
-DEFINE_APP(ComputeParticleSimulator, "Compute Shader Particle System")
-
-#define STRINGIZE(a) #a
 
 static inline float random_float()
 {
@@ -100,60 +48,18 @@ static vmath::vec3 random_vector(float minmag = 0.0f, float maxmag = 1.0f)
     return randomvec;
 }
 
-void ComputeParticleSimulator::Initialize(const char * title)
+bool ComputeParticleSimulator::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     int i;
 
     // Initialize our compute program
     compute_prog = glCreateProgram();
 
-    static const char compute_shader_source[] =
-        STRINGIZE(
-#version 430 core\n
-
-layout (std140, binding = 0) uniform attractor_block
-{
-    vec4 attractor[64]; // xyz = position, w = mass
-};
-
-layout (local_size_x = 1024) in;
-
-layout (rgba32f, binding = 0) uniform imageBuffer velocity_buffer;
-layout (rgba32f, binding = 1) uniform imageBuffer position_buffer;
-
-uniform float dt = 1.0;
-
-void main(void)
-{
-    vec4 vel = imageLoad(velocity_buffer, int(gl_GlobalInvocationID.x));
-    vec4 pos = imageLoad(position_buffer, int(gl_GlobalInvocationID.x));
-
-    int i;
-
-    pos.xyz += vel.xyz * dt;
-    pos.w -= 0.0001 * dt;
-
-    for (i = 0; i < 4; i++)
-    {
-        vec3 dist = (attractor[i].xyz - pos.xyz);
-        vel.xyz += dt * dt * attractor[i].w * normalize(dist) / (dot(dist, dist) + 10.0);
-    }
-
-    if (pos.w <= 0.0)
-    {
-        pos.xyz = -pos.xyz * 0.01;
-        vel.xyz *= 0.01;
-        pos.w += 1.0f;
-    }
-
-    imageStore(position_buffer, int(gl_GlobalInvocationID.x), pos);
-    imageStore(velocity_buffer, int(gl_GlobalInvocationID.x), vel);
-}
-        );
-
-    vglAttachShaderSource(compute_prog, GL_COMPUTE_SHADER, compute_shader_source);
+    vglAttachShaderFile(compute_prog, GL_COMPUTE_SHADER, "media/shaders/particlesimulator/particlesimulator.cs.glsl");
 
     glLinkProgram(compute_prog);
 
@@ -217,43 +123,18 @@ void main(void)
     // Now create a simple program to visualize the result
     render_prog = glCreateProgram();
 
-    static const char render_vs[] =
-        "#version 430 core\n"
-        "\n"
-        "in vec4 vert;\n"
-        "\n"
-        "uniform mat4 mvp;\n"
-        "\n"
-        "out float intensity;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    intensity = vert.w;\n"
-        "    gl_Position = mvp * vec4(vert.xyz, 1.0);\n"
-        "}\n";
-
-    static const char render_fs[] =
-        "#version 430 core\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "in float intensity;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = mix(vec4(0.0f, 0.2f, 1.0f, 1.0f), vec4(0.2f, 0.05f, 0.0f, 1.0f), intensity);\n"
-        "}\n";
-
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/particlesimulator/render.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/particlesimulator/render.fs.glsl");
 
     glLinkProgram(render_prog);
+
+    return true;
 }
 
-void ComputeParticleSimulator::Display(bool auto_redraw)
+void ComputeParticleSimulator::OnDisplay()
 {
-    static const GLuint start_ticks = app_time() - 100000;
-    GLuint current_ticks = app_time();
+    static const GLuint start_ticks = GetAppTime() - 100000;
+    GLuint current_ticks = GetAppTime();
     static GLuint last_ticks = current_ticks;
     float time = ((start_ticks - current_ticks) & 0xFFFFF) / float(0xFFFFF);
     float delta_time = (float)(current_ticks - last_ticks) * 0.075f;
@@ -315,10 +196,10 @@ void ComputeParticleSimulator::Display(bool auto_redraw)
 
     last_ticks = current_ticks;
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void ComputeParticleSimulator::Finalize(void)
+void ComputeParticleSimulator::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(compute_prog);
@@ -326,8 +207,16 @@ void ComputeParticleSimulator::Finalize(void)
     glDeleteVertexArrays(1, &render_vao);
 }
 
-void ComputeParticleSimulator::Resize(int width, int height)
+void ComputeParticleSimulator::OnResize(int width, int height)
 {
     glViewport(0, 0, width, height);
     aspect_ratio = (float)width / (float)height;
+}
+
+int main(int argc, char** argv)
+{
+    ComputeParticleSimulator app;
+    AppConfig config{};
+    config.title = "Compute Shader Particle System";
+    return app.Run(config);
 }

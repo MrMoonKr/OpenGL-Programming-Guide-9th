@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "03-pointsprites.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -17,26 +17,6 @@
 using namespace vmath;
 
 #define POINT_COUNT 4
-
-BEGIN_APP_DECLARATION(PointSpriteExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint render_prog;
-    GLuint vao[1];
-    GLuint vbo[1];
-    GLuint sprite_texture;
-
-    GLint render_model_matrix_loc;
-    GLint render_projection_matrix_loc;
-END_APP_DECLARATION()
-
-DEFINE_APP(PointSpriteExample, "Point Sprite Example")
 
 namespace vtarga {
 unsigned char * load_targa(const char * filename, GLenum &format, int &width, int &height);
@@ -57,10 +37,12 @@ static inline float random_float()
     return (res - 1.0f);
 }
 
-void PointSpriteExample::Initialize(const char * title)
+bool PointSpriteExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     GLenum format;
     int width, height;
     unsigned char * data;
@@ -115,11 +97,13 @@ void PointSpriteExample::Initialize(const char * title)
     glEnableVertexAttribArray(1);
 
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    return true;
 }
 
-void PointSpriteExample::Display(bool auto_redraw)
+void PointSpriteExample::OnDisplay()
 {
-    float t = float(app_time() & 0x1FFF) / float(0x1FFF);
+    float t = float(GetAppTime() & 0x1FFF) / float(0x1FFF);
     static float q = 0.0f;
     static const vec3 X(1.0f, 0.0f, 0.0f);
     static const vec3 Y(0.0f, 1.0f, 0.0f);
@@ -153,10 +137,10 @@ void PointSpriteExample::Display(bool auto_redraw)
     glUniformMatrix4fv(render_model_matrix_loc, 1, GL_FALSE, model_matrix);
     glDrawArrays(GL_POINTS, 0, POINT_COUNT);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void PointSpriteExample::Finalize(void)
+void PointSpriteExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_prog);
@@ -164,9 +148,18 @@ void PointSpriteExample::Finalize(void)
     glDeleteBuffers(1, vbo);
 }
 
-void PointSpriteExample::Resize(int width, int height)
+void PointSpriteExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    PointSpriteExample app;
+    AppConfig config{};
+    config.title = "Point Sprite Example";
+    return app.Run(config);
+}
+

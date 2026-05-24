@@ -8,7 +8,7 @@
 // #define USE_GL3W
 #include <vermilion.h>
 
-#include "vapp.h"
+#include "12-simplecompute.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -16,50 +16,16 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(SimpleComputeShaderExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    GLuint  compute_prog;
-    GLuint  compute_shader;
-
-    // Texture for compute shader to write into
-    GLuint  output_image;
-
-    // Program, vao and vbo to render a full screen quad
-    GLuint  render_prog;
-    GLuint  render_vao;
-    GLuint  render_vbo;
-END_APP_DECLARATION()
-
-DEFINE_APP(SimpleComputeShaderExample, "Simple Compute Shader Example")
-
-void SimpleComputeShaderExample::Initialize(const char * title)
+bool SimpleComputeShaderExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     // Initialize our compute program
     compute_prog = glCreateProgram();
 
-    static const char compute_shader_source[] =
-        "#version 430 core\n"
-        "\n"
-        "layout (local_size_x = 32, local_size_y = 16) in;\n"
-        "\n"
-        "layout (rgba32f) uniform image2D output_image;\n"
-        "void main(void)\n"
-        "{\n"
-        "    imageStore(output_image,\n"
-        "    ivec2(gl_GlobalInvocationID.xy),\n"
-        "    vec4(vec2(gl_LocalInvocationID.xy) / vec2(gl_WorkGroupSize.xy), 0.0, 0.0));\n"
-        "}\n"
-    ;
-
-    vglAttachShaderSource(compute_prog, GL_COMPUTE_SHADER, compute_shader_source);
+    vglAttachShaderFile(compute_prog, GL_COMPUTE_SHADER, "media/shaders/simplecompute/simplecompute.cs.glsl");
 
     glLinkProgram(compute_prog);
 
@@ -71,30 +37,8 @@ void SimpleComputeShaderExample::Initialize(const char * title)
     // Now create a simple program to visualize the result
     render_prog = glCreateProgram();
 
-    static const char render_vs[] =
-        "#version 430 core\n"
-        "\n"
-        "in vec4 vert;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = vert;\n"
-        "}\n";
-
-    static const char render_fs[] =
-        "#version 430 core\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform sampler2D output_image;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = texture(output_image, vec2(gl_FragCoord.xy) / vec2(textureSize(output_image, 0)));\n"
-        "}\n";
-
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/simplecompute/render.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/simplecompute/render.fs.glsl");
 
     glLinkProgram(render_prog);
 
@@ -113,9 +57,11 @@ void SimpleComputeShaderExample::Initialize(const char * title)
     };
     glBufferData(GL_ARRAY_BUFFER, sizeof(verts), verts, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    return true;
 }
 
-void SimpleComputeShaderExample::Display(bool auto_redraw)
+void SimpleComputeShaderExample::OnDisplay()
 {
     // Activate the compute program and bind the output texture image
     glUseProgram(compute_prog);
@@ -130,10 +76,10 @@ void SimpleComputeShaderExample::Display(bool auto_redraw)
     glUseProgram(render_prog);
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void SimpleComputeShaderExample::Finalize(void)
+void SimpleComputeShaderExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(compute_prog);
@@ -142,7 +88,16 @@ void SimpleComputeShaderExample::Finalize(void)
     glDeleteVertexArrays(1, &render_vao);
 }
 
-void SimpleComputeShaderExample::Resize(int width, int height)
+void SimpleComputeShaderExample::OnResize(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
+
+int main(int argc, char** argv)
+{
+    SimpleComputeShaderExample app;
+    AppConfig config{};
+    config.title = "Simple Compute Shader Example";
+    return app.Run(config);
+}
+

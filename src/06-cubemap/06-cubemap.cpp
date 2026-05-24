@@ -7,7 +7,7 @@
 
 #include "vermilion.h"
 
-#include "vapp.h"
+#include "06-cubemap.h"
 #include "vutils.h"
 #include "vbm.h"
 
@@ -15,116 +15,23 @@
 
 #include <stdio.h>
 
-BEGIN_APP_DECLARATION(CubeMapExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-    GLuint skybox_prog;
-    GLuint object_prog;
-    GLuint vao;
-
-    GLuint cube_vbo;
-    GLuint cube_element_buffer;
-
-    GLuint tex;
-    GLint skybox_rotate_loc;
-
-    GLint object_mat_mvp_loc;
-    GLint object_mat_mv_loc;
-
-    VBObject object;
-END_APP_DECLARATION()
-
-DEFINE_APP(CubeMapExample, "Cube Map Example")
-
-void CubeMapExample::Initialize(const char * title)
+bool CubeMapExample::OnInitialize(const AppConfig& config)
 {
-    base::Initialize(title);
-
+    if (!VermilionApplication::OnInitialize(config))
+    {
+        return false;
+    }
     skybox_prog = glCreateProgram();
 
-    static const char skybox_shader_vs[] =
-        "#version 330 core\n"
-        "\n"
-        "layout (location = 0) in vec3 in_position;\n"
-        "\n"
-        "out vec3 tex_coord;\n"
-        "\n"
-        "uniform mat4 tc_rotate;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = tc_rotate * vec4(in_position, 1.0);\n"
-        "    tex_coord = in_position;\n"
-        "}\n"
-    ;
-
-    static const char skybox_shader_fs[] =
-        "#version 330 core\n"
-        "\n"
-        "in vec3 tex_coord;\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform samplerCube tex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = texture(tex, tex_coord);\n"
-        "}\n"
-    ;
-
-    vglAttachShaderSource(skybox_prog, GL_VERTEX_SHADER, skybox_shader_vs);
-    vglAttachShaderSource(skybox_prog, GL_FRAGMENT_SHADER, skybox_shader_fs);
+    vglAttachShaderFile(skybox_prog, GL_VERTEX_SHADER, "media/shaders/cubemap/skybox.vs.glsl");
+    vglAttachShaderFile(skybox_prog, GL_FRAGMENT_SHADER, "media/shaders/cubemap/skybox.fs.glsl");
 
     glLinkProgram(skybox_prog);
 
-    static const char object_shader_vs[] =
-        "#version 330 core\n"
-        "\n"
-        "layout (location = 0) in vec4 in_position;\n"
-        "layout (location = 1) in vec3 in_normal;\n"
-        "\n"
-        "out vec3 vs_fs_normal;\n"
-        "out vec3 vs_fs_position;\n"
-        "\n"
-        "uniform mat4 mat_mvp;\n"
-        "uniform mat4 mat_mv;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    gl_Position = mat_mvp * in_position;\n"
-        "    vs_fs_normal = mat3(mat_mv) * in_normal;\n"
-        "    vs_fs_position = (mat_mv * in_position).xyz;\n"
-        "}\n"
-    ;
-
-    static const char object_shader_fs[] =
-        "#version 330 core\n"
-        "\n"
-        "in vec3 vs_fs_normal;\n"
-        "in vec3 vs_fs_position;\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "uniform samplerCube tex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    vec3 tc =  reflect(vs_fs_position, normalize(vs_fs_normal));\n"
-        "    color = vec4(0.3, 0.2, 0.1, 1.0) + vec4(0.97, 0.83, 0.79, 0.0) * texture(tex, tc);\n"
-        "}\n"
-    ;
-
     object_prog = glCreateProgram();
 
-    vglAttachShaderSource(object_prog, GL_VERTEX_SHADER, object_shader_vs);
-    vglAttachShaderSource(object_prog, GL_FRAGMENT_SHADER, object_shader_fs);
+    vglAttachShaderFile(object_prog, GL_VERTEX_SHADER, "media/shaders/cubemap/object.vs.glsl");
+    vglAttachShaderFile(object_prog, GL_FRAGMENT_SHADER, "media/shaders/cubemap/object.fs.glsl");
 
     glLinkProgram(object_prog);
 
@@ -176,12 +83,14 @@ void CubeMapExample::Initialize(const char * title)
     vglUnloadImage(&image);
 
     object.LoadFromVBM("media/torus.vbm", 0, 1, 2);
+
+    return true;
 }
 
-void CubeMapExample::Display(bool auto_redraw)
+void CubeMapExample::OnDisplay()
 {
-    static const unsigned int start_time = app_time();
-    float t = float((app_time() - start_time)) / float(0x3FFF);
+    static const unsigned int start_time = GetAppTime();
+    float t = float((GetAppTime() - start_time)) / float(0x3FFF);
     static const vmath::vec3 X(1.0f, 0.0f, 0.0f);
     static const vmath::vec3 Y(0.0f, 1.0f, 0.0f);
     static const vmath::vec3 Z(0.0f, 0.0f, 1.0f);
@@ -222,10 +131,10 @@ void CubeMapExample::Display(bool auto_redraw)
 
     object.Render();
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void CubeMapExample::Finalize(void)
+void CubeMapExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(skybox_prog);
@@ -234,9 +143,18 @@ void CubeMapExample::Finalize(void)
     glDeleteVertexArrays(1, &tex);
 }
 
-void CubeMapExample::Resize(int width, int height)
+void CubeMapExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    CubeMapExample app;
+    AppConfig config{};
+    config.title = "Cube Map Example";
+    return app.Run(config);
+}
+

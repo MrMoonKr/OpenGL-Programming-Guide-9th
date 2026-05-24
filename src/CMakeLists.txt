@@ -8,7 +8,14 @@ add_custom_target(
 )
 
 function(add_vermilion_example name)
-    add_executable(${name} WIN32 "${CMAKE_CURRENT_SOURCE_DIR}/${name}.cpp")
+    set(example_cpp "${CMAKE_CURRENT_SOURCE_DIR}/${name}.cpp")
+    set(example_header "${CMAKE_CURRENT_SOURCE_DIR}/${name}.h")
+
+    add_executable(${name} "${example_cpp}")
+    if(EXISTS "${example_header}")
+        target_sources(${name} PRIVATE "${example_header}")
+    endif()
+
     set_property(TARGET ${name} PROPERTY DEBUG_POSTFIX "_d")
     add_dependencies(${name} copy_media_assets)
     target_link_libraries(${name} PRIVATE vermilion)
@@ -23,6 +30,7 @@ function(add_vermilion_example name)
 endfunction()
 
 add_subdirectory(common)
+add_subdirectory(00-window)
 add_subdirectory(01-keypress)
 add_subdirectory(01-triangles)
 add_subdirectory(03-drawcommands)

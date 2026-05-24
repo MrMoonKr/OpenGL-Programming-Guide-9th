@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "03-instancing3.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -16,121 +16,24 @@
 
 using namespace vmath;
 
-BEGIN_APP_DECLARATION(InstanceIDExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-
-    // Member variables
-    float aspect;
-
-    GLuint color_buffer;
-    GLuint model_matrix_buffer;
-    GLuint color_tbo;
-    GLuint model_matrix_tbo;
-    GLuint render_prog;
-
-    GLint view_matrix_loc;
-    GLint projection_matrix_loc;
-
-    VBObject object;
-END_APP_DECLARATION()
-
-DEFINE_APP(InstanceIDExample, "gl_InstanceID Example")
-
 #define INSTANCE_COUNT 100
 
-void InstanceIDExample::Initialize(const char * title)
+bool InstanceIDExample::OnInitialize(const AppConfig& config)
 {
     int n;
 
-    base::Initialize(title);
+    if (!VermilionApplication::OnInitialize(config))
 
+    {
+
+        return false;
+
+    }
     // Create the program for rendering the model
     render_prog = glCreateProgram();
 
-    // This is the rendering vertex shader
-    static const char render_vs[] =
-        "#version 410\n"
-        "\n"
-        "// 'position' and 'normal' are regular vertex attributes\n"
-        "layout (location = 0) in vec4 position;\n"
-        "layout (location = 1) in vec3 normal;\n"
-        "\n"
-        "// Color is a per-instance attribute\n"
-        "layout (location = 2) in vec4 color;\n"
-        "\n"
-        "// The view matrix and the projection matrix are constant across a draw\n"
-        "uniform mat4 view_matrix;\n"
-        "uniform mat4 projection_matrix;\n"
-        "\n"
-        "// These are the TBOs that hold per-instance colors and per-instance\n"
-        "// model matrices\n"
-        "uniform samplerBuffer color_tbo;\n"
-        "uniform samplerBuffer model_matrix_tbo;\n"
-        "\n"
-        "// The output of the vertex shader (matched to the fragment shader)\n"
-        "out VERTEX\n"
-        "{\n"
-        "    vec3    normal;\n"
-        "    vec4    color;\n"
-        "} vertex;\n"
-        "\n"
-        "// Ok, go!\n"
-        "void main(void)\n"
-        "{\n"
-        "    // Use gl_InstanceID to obtain the instance color from the color TBO\n"
-        "    vec4 color = texelFetch(color_tbo, gl_InstanceID);\n"
-        "\n"
-        "    // Generating the model matrix is more complex because you can't\n"
-        "    // store mat4 data in a TBO. Instead, we need to store each matrix\n"
-        "    // as four vec4 variables and assemble the matrix in the shader.\n"
-        "    // First, fetch the four columns of the matrix (remember, matrices are\n"
-        "    // stored in memory in column-primary order).\n"
-        "    vec4 col1 = texelFetch(model_matrix_tbo, gl_InstanceID * 4);\n"
-        "    vec4 col2 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 1);\n"
-        "    vec4 col3 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 2);\n"
-        "    vec4 col4 = texelFetch(model_matrix_tbo, gl_InstanceID * 4 + 3);\n"
-        "\n"
-        "    // Now assemble the four columns into a matrix.\n"
-        "    mat4 model_matrix = mat4(col1, col2, col3, col4);\n"
-        "\n"
-        "    // Construct a model-view matrix from the uniform view matrix\n"
-        "    // and the per-instance model matrix.\n"
-        "    mat4 model_view_matrix = view_matrix * model_matrix;\n"
-        "\n"
-        "    // Transform position by the model-view matrix, then by the\n"
-        "    // projection matrix.\n"
-        "    gl_Position = projection_matrix * (model_view_matrix * position);\n"
-        "    // Transform the normal by the upper-left-3x3-submatrix of the\n"
-        "    // model-view matrix\n"
-        "    vertex.normal = mat3(model_view_matrix) * normal;\n"
-        "    // Pass the per-instance color through to the fragment shader.\n"
-        "    vertex.color = color;\n"
-        "}\n";
-
-    // Simple fragment shader
-    static const char render_fs[] =
-        "#version 410\n"
-        "\n"
-        "layout (location = 0) out vec4 color;\n"
-        "\n"
-        "in VERTEX\n"
-        "{\n"
-        "    vec3    normal;\n"
-        "    vec4    color;\n"
-        "} vertex;\n"
-        "\n"
-        "void main(void)\n"
-        "{\n"
-        "    color = vertex.color * (0.1 + abs(vertex.normal.z)) + vec4(0.8, 0.9, 0.7, 1.0) * pow(abs(vertex.normal.z), 40.0);\n"
-        "}\n";
-
-    // Compile and link like normal
-    vglAttachShaderSource(render_prog, GL_VERTEX_SHADER, render_vs);
-    vglAttachShaderSource(render_prog, GL_FRAGMENT_SHADER, render_fs);
+    vglAttachShaderFile(render_prog, GL_VERTEX_SHADER, "media/shaders/instancing3/instancing3.vs.glsl");
+    vglAttachShaderFile(render_prog, GL_FRAGMENT_SHADER, "media/shaders/instancing3/instancing3.fs.glsl");
 
     glLinkProgram(render_prog);
     glUseProgram(render_prog);
@@ -214,6 +117,8 @@ void InstanceIDExample::Initialize(const char * title)
     glBufferData(GL_TEXTURE_BUFFER, INSTANCE_COUNT * sizeof(mat4), NULL, GL_DYNAMIC_DRAW);
     glTexBuffer(GL_TEXTURE_BUFFER, GL_RGBA32F, model_matrix_buffer);
     glActiveTexture(GL_TEXTURE0);
+
+    return true;
 }
 
 static inline int min(int a, int b)
@@ -221,9 +126,9 @@ static inline int min(int a, int b)
     return a < b ? a : b;
 }
 
-void InstanceIDExample::Display(bool auto_redraw)
+void InstanceIDExample::OnDisplay()
 {
-    float t = float(app_time() & 0x3FFF) / float(0x3FFF);
+    float t = float(GetAppTime() & 0x3FFF) / float(0x3FFF);
     static float q = 0.0f;
     static const vec3 X(1.0f, 0.0f, 0.0f);
     static const vec3 Y(0.0f, 1.0f, 0.0f);
@@ -270,10 +175,10 @@ void InstanceIDExample::Display(bool auto_redraw)
     // Render INSTANCE_COUNT objects
     object.Render(0, INSTANCE_COUNT);
 
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
-void InstanceIDExample::Finalize(void)
+void InstanceIDExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_prog);
@@ -281,9 +186,18 @@ void InstanceIDExample::Finalize(void)
     glDeleteBuffers(1, &model_matrix_buffer);
 }
 
-void InstanceIDExample::Resize(int width, int height)
+void InstanceIDExample::OnResize(int width, int height)
 {
     glViewport(0, 0 , width, height);
 
     aspect = float(height) / float(width);
 }
+
+int main(int argc, char** argv)
+{
+    InstanceIDExample app;
+    AppConfig config{};
+    config.title = "gl_InstanceID Example";
+    return app.Run(config);
+}
+

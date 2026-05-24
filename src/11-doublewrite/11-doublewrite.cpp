@@ -5,7 +5,7 @@
    $Id$
  */
 
-#include "vapp.h"
+#include "11-doublewrite.h"
 #include "vutils.h"
 
 #include "vmath.h"
@@ -28,63 +28,17 @@ using namespace vmath;
 
 #define FRUSTUM_DEPTH 2000.0f
 
-BEGIN_APP_DECLARATION(DoubleWriteExample)
-    // Override functions from base class
-    virtual void Initialize(const char * title);
-    virtual void Display(bool auto_redraw);
-    virtual void Finalize(void);
-    virtual void Resize(int width, int height);
-    virtual void OnKey(int key, int scancode, int action, int mods);
-
-    // Member variables
-    float aspect;
-
-    // Program to construct the linked list (renders the transparent objects)
-    GLuint  list_build_program;
-
-    // Color palette buffer texture
-    GLuint  image_palette_buffer;
-    GLuint  image_palette_texture;
-
-    // Output image and PBO for clearing it
-    GLuint  output_texture;
-    GLuint  output_texture_clear_buffer;
-
-    // Program to render the scene
-    GLuint render_scene_prog;
-    struct
-    {
-        GLint aspect;
-        GLint time;
-        GLint model_matrix;
-        GLint view_matrix;
-        GLint projection_matrix;
-    } render_scene_uniforms;
-
-    // Program to resolve 
-    GLuint resolve_program;
-
-    // Full Screen Quad
-    GLuint  quad_vbo;
-    GLuint  quad_vao;
-
-    GLint current_width;
-    GLint current_height;
-
-    VBObject object;
-
-    void DrawScene(void);
-    void InitPrograms(void);
-END_APP_DECLARATION()
-
-DEFINE_APP(DoubleWriteExample, "Double Write Example")
-
-void DoubleWriteExample::Initialize(const char * title)
+bool DoubleWriteExample::OnInitialize(const AppConfig& config)
 {
     render_scene_prog = -1;
 
-    base::Initialize(title);
+    if (!VermilionApplication::OnInitialize(config))
 
+    {
+
+        return false;
+
+    }
     InitPrograms();
 
     // Create palette texture
@@ -143,6 +97,8 @@ void DoubleWriteExample::Initialize(const char * title)
     glClearDepth(1.0f);
 
     object.LoadFromVBM("media/unit_pipe.vbm", 0, 1, 2);
+
+    return true;
 }
 
 void DoubleWriteExample::InitPrograms()
@@ -176,11 +132,11 @@ void DoubleWriteExample::InitPrograms()
     resolve_program = LoadShaders(resolve_shaders);
 }
 
-void DoubleWriteExample::Display(bool auto_redraw)
+void DoubleWriteExample::OnDisplay()
 {
     float t;
 
-    unsigned int current_time = app_time();
+    unsigned int current_time = GetAppTime();
 
     t = (float)(current_time & 0xFFFFF) / (float)0x3FFF;
 
@@ -229,7 +185,7 @@ void DoubleWriteExample::Display(bool auto_redraw)
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
     // Done
-    base::Display();
+    VermilionApplication::OnDisplay();
 }
 
 void DoubleWriteExample::DrawScene(void)
@@ -239,7 +195,7 @@ void DoubleWriteExample::DrawScene(void)
     glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 }
 
-void DoubleWriteExample::Finalize(void)
+void DoubleWriteExample::OnShutdown()
 {
     glUseProgram(0);
     glDeleteProgram(render_scene_prog);
@@ -247,7 +203,7 @@ void DoubleWriteExample::Finalize(void)
     glDeleteVertexArrays(1, &quad_vao);
 }
 
-void DoubleWriteExample::Resize(int width, int height)
+void DoubleWriteExample::OnResize(int width, int height)
 {
     current_width = width;
     current_height = height;
@@ -268,5 +224,14 @@ void DoubleWriteExample::OnKey(int key, int scancode, int action, int mods)
         }
     }
 
-    base::OnKey(key, scancode, action, mods);
+    VermilionApplication::OnKey(key, scancode, action, mods);
 }
+
+int main(int argc, char** argv)
+{
+    DoubleWriteExample app;
+    AppConfig config{};
+    config.title = "Double Write Example";
+    return app.Run(config);
+}
+
