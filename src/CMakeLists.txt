@@ -31,6 +31,7 @@ endfunction()
 
 add_subdirectory(common)
 add_subdirectory(00-window)
+add_subdirectory(01-cube)
 add_subdirectory(01-keypress)
 add_subdirectory(01-triangles)
 add_subdirectory(03-drawcommands)
