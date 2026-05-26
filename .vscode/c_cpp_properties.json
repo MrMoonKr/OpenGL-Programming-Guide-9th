@@ -4,6 +4,7 @@
     {
       "name": "Win32",
       "compilerPath": "C:/Program Files/Microsoft Visual Studio/2022/Community/VC/Tools/MSVC/14.44.35207/bin/Hostx64/x64/cl.exe",
+      "configurationProvider": "ms-vscode.cmake-tools",
       "intelliSenseMode": "windows-msvc-x64",
       "cStandard": "c11",
       "cppStandard": "c++17",

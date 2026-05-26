@@ -59,6 +59,8 @@ protected:
 
     virtual void OnKey(int key, int scancode, int action, int mods) { /* NOTHING */ }
     virtual void OnChar(unsigned int codepoint) { /* NOTHING */ }
+    virtual void OnMouseButton(int button, int action, int mods) { /* NOTHING */ }
+    virtual void OnCursorMove(double x, double y) { /* NOTHING */ }
 
     GLFWwindow* GetWindow() const { return m_pWindow; }
     const AppConfig& GetAppConfig() const { return m_appConfig; }
@@ -73,6 +75,8 @@ private:
     static void framebuffer_size_callback(GLFWwindow* window, int width, int height);
     static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
     static void char_callback(GLFWwindow* window, unsigned int codepoint);
+    static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
+    static void cursor_position_callback(GLFWwindow* window, double x, double y);
 
 #ifdef _DEBUG
     static void APIENTRY DebugOutputCallback(GLenum source,

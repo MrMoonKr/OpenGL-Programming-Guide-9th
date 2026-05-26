@@ -38,6 +38,20 @@ void VermilionApplication::char_callback(GLFWwindow* window, unsigned int codepo
     pThis->OnChar(codepoint);
 }
 
+void VermilionApplication::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
+{
+    VermilionApplication* pThis = (VermilionApplication*)glfwGetWindowUserPointer(window);
+
+    pThis->OnMouseButton(button, action, mods);
+}
+
+void VermilionApplication::cursor_position_callback(GLFWwindow* window, double x, double y)
+{
+    VermilionApplication* pThis = (VermilionApplication*)glfwGetWindowUserPointer(window);
+
+    pThis->OnCursorMove(x, y);
+}
+
 unsigned int VermilionApplication::GetAppTime() const
 {
     const auto elapsed =
@@ -185,6 +199,8 @@ bool VermilionApplication::CreateAppWindow(const AppConfig& config)
     glfwSetFramebufferSizeCallback(m_pWindow, framebuffer_size_callback);
     glfwSetKeyCallback(m_pWindow, key_callback);
     glfwSetCharCallback(m_pWindow, char_callback);
+    glfwSetMouseButtonCallback(m_pWindow, mouse_button_callback);
+    glfwSetCursorPosCallback(m_pWindow, cursor_position_callback);
 
     glfwMakeContextCurrent(m_pWindow);
     glfwSwapInterval(config.vsync ? 1 : 0);

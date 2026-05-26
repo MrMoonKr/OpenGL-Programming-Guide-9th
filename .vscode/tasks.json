@@ -96,6 +96,22 @@
       "problemMatcher": ["$msCompile"]
     },
     {
+      "label": "build-debug:02-01-camera",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "02-01-camera"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
+      "label": "build-debug:02-02-shader",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "02-02-shader"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
       "label": "build-debug:03-drawcommands",
       "type": "shell",
       "command": "cmake",

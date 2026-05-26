@@ -34,7 +34,10 @@ constexpr std::array<GLushort, 36> kIndices = {{
     0, 4, 5, 5, 1, 0
 }};
 
-constexpr const char* kVertexShaderSource = R"(#version 460 core
+constexpr const char* kVertexShaderSource = R"(
+
+#version 460 core
+
 layout (location = 0) in vec3 a_position;
 layout (location = 1) in vec3 a_color;
 
@@ -47,9 +50,13 @@ void main()
     gl_Position = u_mvp * vec4(a_position, 1.0);
     v_color = a_color;
 }
+
 )";
 
-constexpr const char* kFragmentShaderSource = R"(#version 460 core
+constexpr const char* kFragmentShaderSource = R"(
+
+#version 460 core
+
 in vec3 v_color;
 
 out vec4 fragColor;
@@ -58,6 +65,7 @@ void main()
 {
     fragColor = vec4(v_color, 1.0);
 }
+
 )";
 
 bool LinkProgram(GLuint program)

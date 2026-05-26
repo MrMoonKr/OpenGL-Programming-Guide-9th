@@ -50,6 +50,30 @@
       "preLaunchTask": "build-debug:01-triangles"
     },
     {
+      "name": "02-01-camera",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/Debug/02-01-camera_d.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "build-debug:02-01-camera"
+    },
+    {
+      "name": "02-02-shader",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/Debug/02-02-shader_d.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "build-debug:02-02-shader"
+    },
+    {
       "name": "03-drawcommands",
       "type": "cppvsdbg",
       "request": "launch",
