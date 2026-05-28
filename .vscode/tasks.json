@@ -112,6 +112,14 @@
       "problemMatcher": ["$msCompile"]
     },
     {
+      "label": "build-debug:02-03-light",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "02-03-light"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
       "label": "build-debug:03-drawcommands",
       "type": "shell",
       "command": "cmake",

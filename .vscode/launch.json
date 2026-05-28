@@ -74,6 +74,18 @@
       "preLaunchTask": "build-debug:02-02-shader"
     },
     {
+      "name": "02-03-light",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/Debug/02-03-light_d.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "build-debug:02-03-light"
+    },
+    {
       "name": "03-drawcommands",
       "type": "cppvsdbg",
       "request": "launch",
