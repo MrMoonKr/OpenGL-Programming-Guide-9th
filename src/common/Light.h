@@ -1,5 +1,5 @@
-#ifndef __02_03_LIGHT_LIGHT_H__
-#define __02_03_LIGHT_LIGHT_H__
+#ifndef __LIGHT_H__
+#define __LIGHT_H__
 
 #include "ShaderProgram.h"
 #include "vmath.h"
@@ -31,4 +31,4 @@ public:
     void Apply(ShaderProgram& program, const char* uniformPrefix) const;
 };
 
-#endif /* __02_03_LIGHT_LIGHT_H__ */
+#endif /* __LIGHT_H__ */

@@ -18,5 +18,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${CMAKE_SOURCE_DIR}/libs/Release")
 
 include(cmake/Dep_GLFW.cmake)
 include(cmake/Dep_GLAD.cmake)
+include(cmake/Dep_STB.cmake)
 
 add_subdirectory(src)

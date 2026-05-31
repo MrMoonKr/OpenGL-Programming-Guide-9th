@@ -1,5 +1,5 @@
-#ifndef __02_03_LIGHT_CAMERA_H__
-#define __02_03_LIGHT_CAMERA_H__
+#ifndef __CAMERA_H__
+#define __CAMERA_H__
 
 #include "vmath.h"
 
@@ -62,4 +62,4 @@ private:
     static float ClampPitch(float pitch);
 };
 
-#endif /* __02_03_LIGHT_CAMERA_H__ */
+#endif /* __CAMERA_H__ */

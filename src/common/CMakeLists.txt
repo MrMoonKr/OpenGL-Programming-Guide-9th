@@ -1,7 +1,12 @@
 add_library(
     vermilion STATIC
+    Camera.h
     CheckError.h
+    Light.h
     LoadShaders.h
+    Shader.h
+    ShaderProgram.h
+    Texture.h
     mat.h
     vapp.h
     vbm.h
@@ -12,7 +17,12 @@ add_library(
     vutils.h
     Shapes/Cube.h
     Shapes/Teapot.h
+    Camera.cpp
+    Light.cpp
     LoadShaders.cpp
+    Shader.cpp
+    ShaderProgram.cpp
+    Texture.cpp
     loadtexture.cpp
     targa.cpp
     vbm.cpp
@@ -22,7 +32,7 @@ add_library(
 )
 
 target_include_directories(vermilion PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}")
-target_link_libraries(vermilion PUBLIC glad glfw)
+target_link_libraries(vermilion PUBLIC glad glfw PRIVATE stb::stb_image)
 
 if(MSVC)
     target_compile_options(vermilion PRIVATE /utf-8)

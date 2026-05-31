@@ -1,5 +1,5 @@
-#ifndef __02_03_LIGHT_SHADERPROGRAM_H__
-#define __02_03_LIGHT_SHADERPROGRAM_H__
+#ifndef __SHADER_PROGRAM_H__
+#define __SHADER_PROGRAM_H__
 
 #include <string>
 #include <unordered_map>
@@ -42,4 +42,4 @@ public:
     bool IsLinked() const { return m_linked; }
 };
 
-#endif /* __02_03_LIGHT_SHADERPROGRAM_H__ */
+#endif /* __SHADER_PROGRAM_H__ */

@@ -1,5 +1,5 @@
-#ifndef __02_02_SHADER_SHADER_H__
-#define __02_02_SHADER_SHADER_H__
+#ifndef __SHADER_H__
+#define __SHADER_H__
 
 #include <string>
 
@@ -11,7 +11,7 @@ private:
     GLuint m_id = 0;
     GLenum m_type = GL_NONE;
     bool m_compiled = false;
-    std::string m_label{};
+    std::string m_label {};
 
 public:
     Shader() = default;
@@ -33,4 +33,4 @@ public:
     const std::string& GetLabel() const { return m_label; }
 };
 
-#endif /* __02_02_SHADER_SHADER_H__ */
+#endif /* __SHADER_H__ */
