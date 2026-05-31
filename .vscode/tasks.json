@@ -200,6 +200,14 @@
       "problemMatcher": ["$msCompile"]
     },
     {
+      "label": "build-debug:05-01-object",
+      "type": "shell",
+      "command": "cmake",
+      "args": ["--build", "--preset", "build-debug", "--target", "05-01-object"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$msCompile"]
+    },
+    {
       "label": "build-debug:06-cubemap",
       "type": "shell",
       "command": "cmake",

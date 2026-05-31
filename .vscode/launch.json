@@ -206,6 +206,18 @@
       "preLaunchTask": "build-debug:04-shadowmap"
     },
     {
+      "name": "05-01-object",
+      "type": "cppvsdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bin/Debug/05-01-object_d.exe",
+      "args": [],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+      "preLaunchTask": "build-debug:05-01-object"
+    },
+    {
       "name": "06-cubemap",
       "type": "cppvsdbg",
       "request": "launch",

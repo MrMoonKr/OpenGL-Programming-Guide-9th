@@ -2,11 +2,17 @@ add_library(
     vermilion STATIC
     Camera.h
     CheckError.h
+    Geometry.h
     Light.h
     LoadShaders.h
+    MeshData.h
+    PrimitiveMesh.h
+    SceneObject.h
     Shader.h
     ShaderProgram.h
     Texture.h
+    Transform.h
+    VertexAttribute.h
     mat.h
     vapp.h
     vbm.h
@@ -18,11 +24,15 @@ add_library(
     Shapes/Cube.h
     Shapes/Teapot.h
     Camera.cpp
+    Geometry.cpp
     Light.cpp
     LoadShaders.cpp
+    PrimitiveMesh.cpp
+    SceneObject.cpp
     Shader.cpp
     ShaderProgram.cpp
     Texture.cpp
+    Transform.cpp
     loadtexture.cpp
     targa.cpp
     vbm.cpp
